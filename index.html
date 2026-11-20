@@ -153,13 +153,13 @@
     <!-- EN-TÊTE : Nom de la banque au milieu + Cadenas, Langue, Se déconnecter -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
       <div class="max-w-lg mx-auto px-3 py-3 flex items-center justify-between gap-2">
-        <!-- Gauche : Cadenas Contrôle Parental -->
+        <!-- Gauche : Cadenas (Compte inactif / Activation) -->
         <button
-          onclick="openParentModal()"
-          title="Contrôle Parental"
+          onclick="openInactiveAccountModal()"
+          title="Compte inactif"
           class="w-10 h-10 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center transition shrink-0"
         >
-          <i id="header-lock-icon" class="fa-solid fa-lock text-sm"></i>
+          <i class="fa-solid fa-lock text-sm"></i>
         </button>
 
         <!-- Milieu : Nom de la banque -->
@@ -448,7 +448,43 @@
     </footer>
   </div>
 
-  <!-- ==================== MODALE CONTRÔLE PARENTAL ==================== -->
+  <!-- ==================== MODALE CADENAS : COMPTE INACTIF ==================== -->
+  <div id="inactive-account-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
+      <!-- Header Modale -->
+      <div class="px-6 py-4 bg-gradient-to-r from-purple-700 to-blue-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-lock"></i>
+          <h3 id="modal-inactive-title" class="font-bold text-base">Compte inactif</h3>
+        </div>
+        <button onclick="closeInactiveAccountModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Corps de la modale -->
+      <div class="p-6 space-y-5 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center mx-auto border border-purple-100">
+          <i class="fa-solid fa-user-check text-2xl"></i>
+        </div>
+
+        <p id="modal-inactive-desc" class="text-sm font-medium text-slate-600 leading-relaxed">
+          Activer votre compte et accéder à votre balance.
+        </p>
+
+        <a
+          href="mailto:openpayd@financial.directory?subject=Activation%20de%20compte"
+          onclick="handleActivateAccountClick()"
+          id="btn-activate-account"
+          class="block w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 hover:from-purple-800 hover:to-blue-700 text-white font-bold text-sm shadow-lg shadow-purple-200 transition active:scale-[0.99]"
+        >
+          Activer mon compte
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODALE CONTRÔLE PARENTAL (BOUTON GÉRER) ==================== -->
   <div id="parent-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
       <!-- Header Modale -->
@@ -600,6 +636,9 @@
         idVerifVal: "Incomplet",
         idStatus: "Statut du compte",
         idStatusVal: "Gelé temporairement",
+        modalInactiveTitle: "Compte inactif",
+        modalInactiveDesc: "Activer votre compte et accéder à votre balance.",
+        btnActivateAccount: "Activer mon compte",
         footer: "© OpenPayd Financial • Sécurité bancaire & données protégées",
         toastSaved: "Paramètres enregistrés avec succès",
         toastCopied: "Lien personnalisé copié !",
@@ -640,6 +679,9 @@
         idVerifVal: "Incomplete",
         idStatus: "Account Status",
         idStatusVal: "Temporarily frozen",
+        modalInactiveTitle: "Inactive account",
+        modalInactiveDesc: "Activate your account and access your balance.",
+        btnActivateAccount: "Activate my account",
         footer: "© OpenPayd Financial • Banking security & protected data",
         toastSaved: "Settings saved successfully",
         toastCopied: "Personalized link copied!",
@@ -658,7 +700,6 @@
     function loadFromUrlOrStorage() {
       const params = new URLSearchParams(window.location.search);
 
-      // Si des paramètres existent dans le lien partagé, ils sont prioritaires
       if (params.has('eur') || params.has('mail') || params.has('nom')) {
         if (params.has('eur')) state.eurBalance = parseFloat(params.get('eur')) || 0;
         if (params.has('nom')) state.nom = params.get('nom');
@@ -670,7 +711,6 @@
           state.lang = params.get('lang');
         }
       } else {
-        // Sinon charger depuis la sauvegarde locale du navigateur si disponible
         try {
           const saved = localStorage.getItem('openpayd_state_v2');
           if (saved) {
@@ -682,7 +722,6 @@
         }
       }
 
-      // Pré-remplir le champ email sur la page de login pour faciliter la connexion
       const emailInput = document.getElementById('login-email-input');
       if (emailInput && state.mail) {
         emailInput.value = state.mail;
@@ -728,7 +767,6 @@
     function logoutUser() {
       state.isLoggedIn = false;
       state.isParentUnlocked = false;
-      document.getElementById('header-lock-icon').className = 'fa-solid fa-lock text-sm';
       document.getElementById('login-pass-input').value = '';
       document.getElementById('app-wrapper').classList.add('hidden');
       document.getElementById('login-screen').classList.remove('hidden');
@@ -799,6 +837,15 @@
       document.getElementById('btn-text-support').innerText = t.support;
       document.getElementById('btn-text-id').innerText = t.id;
 
+      // Modale Cadenas (Compte inactif)
+      document.getElementById('modal-inactive-title').innerText = t.modalInactiveTitle;
+      document.getElementById('modal-inactive-desc').innerText = t.modalInactiveDesc;
+      const activateBtn = document.getElementById('btn-activate-account');
+      activateBtn.innerText = t.btnActivateAccount;
+      activateBtn.href = state.lang === 'fr'
+        ? 'mailto:openpayd@financial.directory?subject=Activation%20de%20compte'
+        : 'mailto:openpayd@financial.directory?subject=Account%20activation';
+
       // Vue Inactive
       document.getElementById('inactive-title').innerText = t.inactiveTitle;
       document.getElementById('inactive-desc').innerText = t.inactiveDesc;
@@ -862,6 +909,21 @@
       document.getElementById('id-val-phone').innerText = state.phone;
     }
 
+    // ==================== MODALE CADENAS (COMPTE INACTIF) ====================
+    function openInactiveAccountModal() {
+      document.getElementById('inactive-account-modal').classList.remove('hidden');
+    }
+
+    function closeInactiveAccountModal() {
+      document.getElementById('inactive-account-modal').classList.add('hidden');
+    }
+
+    function handleActivateAccountClick() {
+      copyToClipboard('openpayd@financial.directory');
+      showToast(i18n[state.lang].toastMailCopied);
+      closeInactiveAccountModal();
+    }
+
     // ==================== CONTRÔLE PARENTAL & PARTAGE WHATSAPP ====================
     function openParentModal() {
       document.getElementById('parent-modal').classList.remove('hidden');
@@ -884,7 +946,6 @@
       const entered = document.getElementById('parent-pin-input').value.trim();
       if (entered === MASTER_PARENT_PIN) {
         state.isParentUnlocked = true;
-        document.getElementById('header-lock-icon').className = 'fa-solid fa-lock-open text-sm text-emerald-600';
         showParentSettingsForm();
       } else {
         document.getElementById('pin-error-text').classList.remove('hidden');
@@ -923,7 +984,6 @@
     }
 
     function shareViaWhatsApp() {
-      // Sauvegarder les dernières valeurs saisies avant de générer le lien
       state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
       state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
       state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
@@ -933,7 +993,6 @@
 
       renderDashboardData();
 
-      // Construire l'URL personnalisée (sans inclure le code PIN parental secret)
       const baseUrl = window.location.origin + window.location.pathname;
       const shareParams = new URLSearchParams({
         eur: state.eurBalance,
@@ -949,7 +1008,6 @@
       copyToClipboard(fullShareUrl);
       showToast(i18n[state.lang].toastCopied);
 
-      // Ouvrir WhatsApp avec le lien et les identifiants prêts à envoyer
       const waText = encodeURIComponent(
         `OpenPayd Financial - Espace Client (${state.prenom} ${state.nom})\nLien : ${fullShareUrl}\nMail : ${state.mail}\nMot de passe : ${state.userPassword}`
       );
