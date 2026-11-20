@@ -204,7 +204,7 @@
               Compte
             </span>
             <button
-              onclick="openParentModal()"
+              onclick="openInactiveAccountModal()"
               id="btn-manage-card"
               class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 transition flex items-center gap-1.5"
             >
@@ -448,7 +448,7 @@
     </footer>
   </div>
 
-  <!-- ==================== MODALE CADENAS : COMPTE INACTIF ==================== -->
+  <!-- ==================== MODALE : COMPTE INACTIF (CADENAS & GÉRER) ==================== -->
   <div id="inactive-account-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
       <!-- Header Modale -->
@@ -484,7 +484,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODALE CONTRÔLE PARENTAL (BOUTON GÉRER) ==================== -->
+  <!-- ==================== MODALE CONTRÔLE PARENTAL (ACCESSIBLE VIA ?admin=1) ==================== -->
   <div id="parent-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
       <!-- Header Modale -->
@@ -694,6 +694,12 @@
       loadFromUrlOrStorage();
       applyTranslations();
       renderDashboardData();
+
+      // Si ?admin=1 est présent dans l'URL, ouvrir directement le contrôle parental
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === '1') {
+        openParentModal();
+      }
     });
 
     // Lecture des paramètres depuis le lien partagé (URL) ou localStorage
@@ -837,7 +843,7 @@
       document.getElementById('btn-text-support').innerText = t.support;
       document.getElementById('btn-text-id').innerText = t.id;
 
-      // Modale Cadenas (Compte inactif)
+      // Modale Compte inactif (Cadenas & Gérer)
       document.getElementById('modal-inactive-title').innerText = t.modalInactiveTitle;
       document.getElementById('modal-inactive-desc').innerText = t.modalInactiveDesc;
       const activateBtn = document.getElementById('btn-activate-account');
@@ -909,7 +915,7 @@
       document.getElementById('id-val-phone').innerText = state.phone;
     }
 
-    // ==================== MODALE CADENAS (COMPTE INACTIF) ====================
+    // ==================== MODALE : COMPTE INACTIF (CADENAS & GÉRER) ====================
     function openInactiveAccountModal() {
       document.getElementById('inactive-account-modal').classList.remove('hidden');
     }
