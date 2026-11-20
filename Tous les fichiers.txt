@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenPayd Financial</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brandMauve: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+            },
+            brandBlue: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-card {
+      background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+      box-shadow: 0 18px 36px -12px rgba(109, 40, 217, 0.35);
+    }
+    .circle-btn {
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .circle-btn:active {
+      transform: scale(0.94);
+    }
+    .fade-in {
+      animation: fadeIn 0.22s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900">
+
+  <!-- ==================== ÉCRAN 0 : PAGE DE CONNEXION (LOGIN) ==================== -->
+  <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-gradient-to-br from-white via-purple-50 to-blue-50">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 fade-in">
+      <!-- Sélecteur de langue sur la page Login -->
+      <div class="flex justify-end mb-4">
+        <button id="login-lang-btn" onclick="toggleLanguage()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition">
+          FR
+        </button>
+      </div>
+
+      <!-- Logo & Nom de la banque -->
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white shadow-lg mb-3">
+          <i class="fa-solid fa-building-columns text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-purple-700 to-blue-600 bg-clip-text text-transparent">
+          OpenPayd Financial
+        </h1>
+        <p id="login-subtitle" class="text-sm text-slate-500 mt-1">Accès sécurisé à votre espace client</p>
+      </div>
+
+      <!-- Formulaire de connexion -->
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <!-- Rectangle : Saisir votre mail -->
+        <div>
+          <label id="label-login-email" for="login-email-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            Saisir votre mail
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="fa-regular fa-envelope"></i>
+            </span>
+            <input
+              type="email"
+              id="login-email-input"
+              required
+              placeholder="exemple@mail.com"
+              class="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none text-sm font-medium transition"
+            />
+          </div>
+        </div>
+
+        <!-- Rectangle : Mot de passe -->
+        <div>
+          <label id="label-login-pass" for="login-pass-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            Mot de passe
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input
+              type="password"
+              id="login-pass-input"
+              required
+              placeholder="••••••••"
+              class="w-full pl-10 pr-11 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-medium transition"
+            />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+              <i id="pass-eye-icon" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Message d'erreur Login -->
+        <p id="login-error-msg" class="hidden text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-center"></p>
+
+        <!-- Rectangle : Bouton Login -->
+        <button
+          type="submit"
+          id="btn-login-submit"
+          class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 hover:from-purple-800 hover:to-blue-700 text-white font-bold text-base shadow-lg shadow-purple-200 transition active:scale-[0.99]"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== APPLICATION PRINCIPALE (APRÈS LOGIN) ==================== -->
+  <div id="app-wrapper" class="hidden min-h-screen flex flex-col justify-between">
+    
+    <!-- EN-TÊTE : Nom de la banque au milieu + Cadenas, Langue, Se déconnecter -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+      <div class="max-w-lg mx-auto px-3 py-3 flex items-center justify-between gap-2">
+        <!-- Gauche : Cadenas Contrôle Parental -->
+        <button
+          onclick="openParentModal()"
+          title="Contrôle Parental"
+          class="w-10 h-10 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center transition shrink-0"
+        >
+          <i id="header-lock-icon" class="fa-solid fa-lock text-sm"></i>
+        </button>
+
+        <!-- Milieu : Nom de la banque -->
+        <div class="text-center flex-1 min-w-0">
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-purple-700 to-blue-600 bg-clip-text text-transparent truncate">
+            OpenPayd Financial
+          </h1>
+          <p id="header-client-area" class="text-[11px] font-medium text-slate-400">Espace client</p>
+        </div>
+
+        <!-- Droite : Langue + Se déconnecter -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button
+            onclick="toggleLanguage()"
+            id="header-lang-btn"
+            class="px-2.5 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+          >
+            FR
+          </button>
+          <button
+            onclick="logoutUser()"
+            id="header-logout-btn"
+            class="px-2.5 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition flex items-center gap-1"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span id="logout-btn-text" class="hidden sm:inline">Se déconnecter</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENU CENTRAL -->
+    <main class="flex-1 w-full max-w-lg mx-auto px-4 py-6">
+
+      <!-- ==================== VUE 1 : TABLEAU DE BORD ==================== -->
+      <section id="view-dashboard" class="space-y-6 fade-in">
+        
+        <!-- Rectangle central de Balance (EUR & USD) -->
+        <div class="glass-card rounded-3xl p-6 text-white relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <span id="badge-account" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
+              Compte
+            </span>
+            <button
+              onclick="openParentModal()"
+              id="btn-manage-card"
+              class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 hover:bg-white/30 transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-sliders"></i>
+              <span id="manage-label">Gérer</span>
+            </button>
+          </div>
+
+          <div class="text-center py-3">
+            <p id="balance-title" class="text-xs uppercase tracking-widest text-purple-100 font-semibold mb-1">
+              Solde disponible
+            </p>
+            <!-- Montant en EUR -->
+            <div id="display-eur" class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+              250,00 €
+            </div>
+            <!-- Équivalent en USD uniquement -->
+            <div id="display-usd" class="mt-2 inline-block px-3.5 py-1 rounded-full bg-white/15 text-sm font-semibold text-blue-100">
+              $270.00 USD
+            </div>
+          </div>
+
+          <!-- Message en bas : Compte gelé + rectangle jaune d'avertissement -->
+          <div class="mt-4 pt-3 border-t border-white/15 space-y-2.5">
+            <div class="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-200">
+              <i class="fa-solid fa-snowflake"></i>
+              <span id="status-frozen-text">Compte gelé</span>
+            </div>
+            <div class="bg-amber-400/95 text-slate-950 rounded-2xl px-4 py-2.5 text-center text-xs font-bold shadow-sm">
+              <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+              <span id="yellow-warning-text">Les retraits sont suspendus, identité non confirmée</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Boutons Circulaires : Deposit, Retrait, Convertir, Support, ID -->
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+          <div class="grid grid-cols-3 gap-4 sm:gap-5 justify-items-center">
+            
+            <!-- Cercle 1 : Deposit -->
+            <button onclick="navigateTo('inactive', 'deposit')" class="circle-btn flex flex-col items-center gap-2 group">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white flex items-center justify-center shadow-md group-hover:shadow-lg">
+                <i class="fa-solid fa-arrow-down text-xl sm:text-2xl"></i>
+              </div>
+              <span id="btn-text-deposit" class="text-xs sm:text-sm font-bold text-slate-700">Deposit</span>
+            </button>
+
+            <!-- Cercle 2 : Retrait -->
+            <button onclick="navigateTo('inactive', 'withdraw')" class="circle-btn flex flex-col items-center gap-2 group">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center shadow-md group-hover:shadow-lg">
+                <i class="fa-solid fa-arrow-up text-xl sm:text-2xl"></i>
+              </div>
+              <span id="btn-text-withdraw" class="text-xs sm:text-sm font-bold text-slate-700">Retrait</span>
+            </button>
+
+            <!-- Cercle 3 : Convertir -->
+            <button onclick="navigateTo('inactive', 'convert')" class="circle-btn flex flex-col items-center gap-2 group">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-purple-100 text-purple-700 border-2 border-purple-200 flex items-center justify-center shadow-sm group-hover:bg-purple-200">
+                <i class="fa-solid fa-arrows-rotate text-xl sm:text-2xl"></i>
+              </div>
+              <span id="btn-text-convert" class="text-xs sm:text-sm font-bold text-slate-700">Convertir</span>
+            </button>
+
+            <!-- Cercle 4 : Support -->
+            <button onclick="navigateTo('support')" class="circle-btn flex flex-col items-center gap-2 group col-span-1">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-100 text-blue-700 border-2 border-blue-200 flex items-center justify-center shadow-sm group-hover:bg-blue-200">
+                <i class="fa-solid fa-headset text-xl sm:text-2xl"></i>
+              </div>
+              <span id="btn-text-support" class="text-xs sm:text-sm font-bold text-slate-700">Support</span>
+            </button>
+
+            <!-- Cercle 5 : ID -->
+            <button onclick="navigateTo('id')" class="circle-btn flex flex-col items-center gap-2 group col-span-1">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-100 text-purple-700 border-2 border-purple-200 flex items-center justify-center shadow-sm group-hover:bg-purple-50">
+                <i class="fa-solid fa-id-card text-xl sm:text-2xl"></i>
+              </div>
+              <span id="btn-text-id" class="text-xs sm:text-sm font-bold text-slate-700">ID</span>
+            </button>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VUE 2 : FONCTION INACTIVE (DEPOSIT / RETRAIT / CONVERTIR) ==================== -->
+      <section id="view-inactive" class="hidden fade-in">
+        <div class="bg-white rounded-3xl p-8 shadow-md border border-slate-100 text-center space-y-6">
+          <div class="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+            <i class="fa-solid fa-ban text-3xl"></i>
+          </div>
+          <div>
+            <p id="inactive-subtitle" class="text-xs font-bold uppercase tracking-wider text-purple-600 mb-1">Opération</p>
+            <h2 id="inactive-title" class="text-2xl font-extrabold text-slate-900">Fonction inactive</h2>
+            <p id="inactive-desc" class="text-sm text-slate-500 mt-2">
+              Cette fonctionnalité est actuellement désactivée sur ce compte.
+            </p>
+          </div>
+          <!-- Rectangle bas : Retour à l'accueil -->
+          <button
+            onclick="navigateTo('dashboard')"
+            id="btn-back-home-inactive"
+            class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 text-white font-bold text-base shadow-md hover:opacity-95 transition"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== VUE 3 : SUPPORT ==================== -->
+      <section id="view-support" class="hidden fade-in">
+        <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-5">
+          <div class="text-center">
+            <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-headset text-2xl"></i>
+            </div>
+            <h2 id="support-title" class="text-xl font-extrabold text-slate-900">Support Client</h2>
+            <p id="support-desc" class="text-xs text-slate-500 mt-1">Assistance et paramètres linguistiques</p>
+          </div>
+
+          <!-- Rectangle Langue [ EN / FR ] -->
+          <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-globe text-purple-700 text-lg"></i>
+              <span id="support-lang-label" class="font-bold text-sm text-slate-800">Langue</span>
+            </div>
+            <div class="flex items-center bg-white rounded-xl p-1 border border-purple-200 shadow-sm">
+              <button
+                onclick="setLanguage('fr')"
+                id="swap-fr-btn"
+                class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition"
+              >
+                FR
+              </button>
+              <button
+                onclick="setLanguage('en')"
+                id="swap-en-btn"
+                class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition"
+              >
+                EN
+              </button>
+            </div>
+          </div>
+
+          <!-- Rectangle Support : envoi mail vers openpayd@financial.directory -->
+          <a
+            href="mailto:openpayd@financial.directory"
+            onclick="handleSupportMailClick(event)"
+            class="block w-full p-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-md transition"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <i class="fa-solid fa-envelope text-lg"></i>
+                </div>
+                <div class="text-left">
+                  <p id="support-rect-title" class="font-bold text-sm">Support</p>
+                  <p class="text-xs text-blue-100">openpayd@financial.directory</p>
+                </div>
+              </div>
+              <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+            </div>
+          </a>
+
+          <!-- Rectangle bas : Retour à l'accueil -->
+          <button
+            onclick="navigateTo('dashboard')"
+            id="btn-back-home-support"
+            class="w-full py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== VUE 4 : ID (INFORMATIONS PERSONNELLES) ==================== -->
+      <section id="view-id" class="hidden fade-in">
+        <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-4">
+          <div class="text-center mb-2">
+            <div class="w-16 h-16 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center mx-auto mb-2">
+              <i class="fa-solid fa-id-card text-2xl"></i>
+            </div>
+            <h2 id="id-title" class="text-xl font-extrabold text-slate-900">Identité & Profil</h2>
+          </div>
+
+          <!-- Rectangles d'informations -->
+          <div class="space-y-3">
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+              <span id="id-lbl-nom" class="text-xs font-semibold text-slate-500">Nom</span>
+              <span id="id-val-nom" class="text-sm font-bold text-slate-900">Dupont</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+              <span id="id-lbl-prenom" class="text-xs font-semibold text-slate-500">Prénom</span>
+              <span id="id-val-prenom" class="text-sm font-bold text-slate-900">Léo</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex justify-between items-center gap-2">
+              <span id="id-lbl-mail" class="text-xs font-semibold text-slate-500 shrink-0">Mail</span>
+              <span id="id-val-mail" class="text-sm font-bold text-slate-900 truncate">leo.dupont@family.fr</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+              <span id="id-lbl-phone" class="text-xs font-semibold text-slate-500">Téléphone</span>
+              <span id="id-val-phone" class="text-sm font-bold text-slate-900">+33 6 12 34 56 78</span>
+            </div>
+
+            <!-- Vérification d'identité : Incomplet -->
+            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex justify-between items-center">
+              <span id="id-lbl-verif" class="text-xs font-semibold text-amber-800">Vérification d'identité</span>
+              <span id="id-val-verif" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-200/80 text-amber-900">
+                Incomplet
+              </span>
+            </div>
+
+            <!-- Statut du compte : Gelé temporairement -->
+            <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex justify-between items-center">
+              <span id="id-lbl-status" class="text-xs font-semibold text-red-800">Statut du compte</span>
+              <span id="id-val-status" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-red-200/80 text-red-900">
+                Gelé temporairement
+              </span>
+            </div>
+          </div>
+
+          <!-- Rectangle bas : Revenir à l'accueil -->
+          <button
+            onclick="navigateTo('dashboard')"
+            id="btn-back-home-id"
+            class="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 text-white font-bold text-sm shadow-md hover:opacity-95 transition"
+          >
+            Revenir à l'accueil
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- PIED DE PAGE -->
+    <footer class="py-4 px-4 text-center border-t border-slate-200/70 bg-white">
+      <p id="footer-text" class="text-xs text-slate-400 font-medium">
+        © OpenPayd Financial • Sécurité bancaire & données protégées
+      </p>
+    </footer>
+  </div>
+
+  <!-- ==================== MODALE CONTRÔLE PARENTAL ==================== -->
+  <div id="parent-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
+      <!-- Header Modale -->
+      <div class="px-6 py-4 bg-gradient-to-r from-purple-700 to-blue-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved"></i>
+          <h3 id="modal-parent-title" class="font-bold text-base">Contrôle Parental</h3>
+        </div>
+        <button onclick="closeParentModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- ÉTAPE 1 : SAISIE DU CODE PIN PARENTAL -->
+      <div id="parent-pin-step" class="p-6 space-y-4">
+        <p id="pin-prompt-text" class="text-sm text-slate-600 text-center">
+          Entrez votre code PIN parental pour ajuster le solde, les informations et générer un lien de partage.
+        </p>
+        <input
+          type="password"
+          id="parent-pin-input"
+          inputmode="numeric"
+          placeholder="••••••"
+          class="w-full text-center text-2xl tracking-[0.5em] font-extrabold py-3.5 rounded-2xl border border-slate-300 focus:border-purple-600 outline-none"
+        />
+        <p id="pin-error-text" class="hidden text-xs text-red-600 font-bold text-center">Code PIN incorrect</p>
+        <button
+          onclick="verifyParentPin()"
+          id="btn-unlock-parent"
+          class="w-full py-3.5 rounded-2xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm transition"
+        >
+          Déverrouiller
+        </button>
+      </div>
+
+      <!-- ÉTAPE 2 : FORMULAIRE DE GESTION & PARTAGE WHATSAPP -->
+      <div id="parent-settings-step" class="hidden p-6 space-y-3.5 overflow-y-auto">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Solde EUR (€)</label>
+          <input type="number" step="0.01" id="edit-eur" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nom</label>
+            <input type="text" id="edit-nom" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Prénom</label>
+            <input type="text" id="edit-prenom" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Mail (Login & Profil)</label>
+          <input type="email" id="edit-mail" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Téléphone</label>
+          <input type="text" id="edit-phone" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe Login (pour ce membre)</label>
+          <input type="text" id="edit-password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono" />
+        </div>
+
+        <div class="pt-2 space-y-2.5">
+          <button
+            onclick="saveParentSettings()"
+            class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition"
+          >
+            <i class="fa-solid fa-check mr-1.5"></i> Enregistrer les modifications
+          </button>
+
+          <button
+            onclick="shareViaWhatsApp()"
+            class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2"
+          >
+            <i class="fa-brands fa-whatsapp text-lg"></i>
+            <span>Partager via WhatsApp (Copier le lien)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast-notification" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold max-w-[90vw]">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-msg">Message</span>
+  </div>
+
+  <!-- ==================== LOGIQUE JAVASCRIPT ==================== -->
+  <script>
+    // CODE PIN PARENTAL UNIQUE ET SECRET (Modifiez cette valeur une seule fois avant de publier sur GitHub)
+    const MASTER_PARENT_PIN = '852963';
+
+    // État initial de l'application
+    let state = {
+      lang: 'fr',
+      eurBalance: 250.00,
+      usdRate: 1.08,
+      nom: 'Dupont',
+      prenom: 'Léo',
+      mail: 'leo.dupont@family.fr',
+      phone: '+33 6 12 34 56 78',
+      userPassword: '123456',
+      isLoggedIn: false,
+      isParentUnlocked: false,
+      lastInactiveType: 'deposit'
+    };
+
+    // Dictionnaire Bilingue FR / EN
+    const i18n = {
+      fr: {
+        loginSubtitle: "Accès sécurisé à votre espace client",
+        labelLoginEmail: "Saisir votre mail",
+        labelLoginPass: "Mot de passe",
+        btnLogin: "Login",
+        loginErr: "Email ou mot de passe incorrect.",
+        clientArea: "Espace client",
+        logout: "Se déconnecter",
+        account: "Compte",
+        manage: "Gérer",
+        balanceTitle: "Solde disponible",
+        frozen: "Compte gelé",
+        yellowWarning: "Les retraits sont suspendus, identité non confirmée",
+        deposit: "Deposit",
+        withdraw: "Retrait",
+        convert: "Convertir",
+        support: "Support",
+        id: "ID",
+        inactiveTitle: "Fonction inactive",
+        inactiveDesc: "Cette fonctionnalité est actuellement désactivée sur ce compte.",
+        backHome: "Retour à l'accueil",
+        returnHomeId: "Revenir à l'accueil",
+        supportTitle: "Support Client",
+        supportDesc: "Assistance et paramètres linguistiques",
+        supportLangLabel: "Langue",
+        supportRectTitle: "Support",
+        idTitle: "Identité & Profil",
+        idNom: "Nom",
+        idPrenom: "Prénom",
+        idMail: "Mail",
+        idPhone: "Téléphone",
+        idVerif: "Vérification d'identité",
+        idVerifVal: "Incomplet",
+        idStatus: "Statut du compte",
+        idStatusVal: "Gelé temporairement",
+        footer: "© OpenPayd Financial • Sécurité bancaire & données protégées",
+        toastSaved: "Paramètres enregistrés avec succès",
+        toastCopied: "Lien personnalisé copié !",
+        toastMailCopied: "Adresse openpayd@financial.directory copiée"
+      },
+      en: {
+        loginSubtitle: "Secure access to your client area",
+        labelLoginEmail: "Enter your email",
+        labelLoginPass: "Password",
+        btnLogin: "Login",
+        loginErr: "Incorrect email or password.",
+        clientArea: "Client Area",
+        logout: "Log out",
+        account: "Account",
+        manage: "Manage",
+        balanceTitle: "Available balance",
+        frozen: "Account frozen",
+        yellowWarning: "Withdrawals are suspended, identity unconfirmed",
+        deposit: "Deposit",
+        withdraw: "Withdraw",
+        convert: "Convert",
+        support: "Support",
+        id: "ID",
+        inactiveTitle: "Inactive function",
+        inactiveDesc: "This feature is currently disabled on this account.",
+        backHome: "Back to home",
+        returnHomeId: "Return to home",
+        supportTitle: "Customer Support",
+        supportDesc: "Assistance and language settings",
+        supportLangLabel: "Language",
+        supportRectTitle: "Support",
+        idTitle: "Identity & Profile",
+        idNom: "Last Name",
+        idPrenom: "First Name",
+        idMail: "Email",
+        idPhone: "Phone",
+        idVerif: "Identity Verification",
+        idVerifVal: "Incomplete",
+        idStatus: "Account Status",
+        idStatusVal: "Temporarily frozen",
+        footer: "© OpenPayd Financial • Banking security & protected data",
+        toastSaved: "Settings saved successfully",
+        toastCopied: "Personalized link copied!",
+        toastMailCopied: "Address openpayd@financial.directory copied"
+      }
+    };
+
+    // Initialisation au chargement de la page
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromUrlOrStorage();
+      applyTranslations();
+      renderDashboardData();
+    });
+
+    // Lecture des paramètres depuis le lien partagé (URL) ou localStorage
+    function loadFromUrlOrStorage() {
+      const params = new URLSearchParams(window.location.search);
+
+      // Si des paramètres existent dans le lien partagé, ils sont prioritaires
+      if (params.has('eur') || params.has('mail') || params.has('nom')) {
+        if (params.has('eur')) state.eurBalance = parseFloat(params.get('eur')) || 0;
+        if (params.has('nom')) state.nom = params.get('nom');
+        if (params.has('prenom')) state.prenom = params.get('prenom');
+        if (params.has('mail')) state.mail = params.get('mail');
+        if (params.has('phone')) state.phone = params.get('phone');
+        if (params.has('pwd')) state.userPassword = params.get('pwd');
+        if (params.has('lang') && (params.get('lang') === 'fr' || params.get('lang') === 'en')) {
+          state.lang = params.get('lang');
+        }
+      } else {
+        // Sinon charger depuis la sauvegarde locale du navigateur si disponible
+        try {
+          const saved = localStorage.getItem('openpayd_state_v2');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            state = { ...state, ...parsed, isLoggedIn: false, isParentUnlocked: false };
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // Pré-remplir le champ email sur la page de login pour faciliter la connexion
+      const emailInput = document.getElementById('login-email-input');
+      if (emailInput && state.mail) {
+        emailInput.value = state.mail;
+      }
+    }
+
+    // Gestion du formulaire Login
+    function handleLogin(event) {
+      event.preventDefault();
+      const inputMail = document.getElementById('login-email-input').value.trim().toLowerCase();
+      const inputPass = document.getElementById('login-pass-input').value.trim();
+      const errEl = document.getElementById('login-error-msg');
+
+      const expectedMail = (state.mail || '').trim().toLowerCase();
+      const expectedPass = (state.userPassword || '').trim();
+
+      if (inputMail === expectedMail && inputPass === expectedPass) {
+        errEl.classList.add('hidden');
+        state.isLoggedIn = true;
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-wrapper').classList.remove('hidden');
+        navigateTo('dashboard');
+      } else {
+        errEl.innerText = i18n[state.lang].loginErr;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    // Afficher / Masquer le mot de passe
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById('login-pass-input');
+      const eyeIcon = document.getElementById('pass-eye-icon');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeIcon.className = 'fa-regular fa-eye-slash';
+      } else {
+        passInput.type = 'password';
+        eyeIcon.className = 'fa-regular fa-eye';
+      }
+    }
+
+    // Bouton Se déconnecter
+    function logoutUser() {
+      state.isLoggedIn = false;
+      state.isParentUnlocked = false;
+      document.getElementById('header-lock-icon').className = 'fa-solid fa-lock text-sm';
+      document.getElementById('login-pass-input').value = '';
+      document.getElementById('app-wrapper').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    // Navigation entre les vues
+    function navigateTo(viewName, subType = '') {
+      const views = ['view-dashboard', 'view-inactive', 'view-support', 'view-id'];
+      views.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      if (viewName === 'inactive') {
+        state.lastInactiveType = subType || 'deposit';
+        const subMap = {
+          deposit: i18n[state.lang].deposit,
+          withdraw: i18n[state.lang].withdraw,
+          convert: i18n[state.lang].convert
+        };
+        document.getElementById('inactive-subtitle').innerText = subMap[state.lastInactiveType] || '';
+      }
+
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Changement de langue instantané FR <-> EN
+    function toggleLanguage() {
+      setLanguage(state.lang === 'fr' ? 'en' : 'fr');
+    }
+
+    function setLanguage(langCode) {
+      state.lang = langCode;
+      applyTranslations();
+      renderDashboardData();
+    }
+
+    function applyTranslations() {
+      const t = i18n[state.lang];
+
+      // Page Login
+      document.getElementById('login-subtitle').innerText = t.loginSubtitle;
+      document.getElementById('label-login-email').innerText = t.labelLoginEmail;
+      document.getElementById('label-login-pass').innerText = t.labelLoginPass;
+      document.getElementById('btn-login-submit').innerText = t.btnLogin;
+      document.getElementById('login-lang-btn').innerText = state.lang.toUpperCase();
+
+      // Header
+      document.getElementById('header-client-area').innerText = t.clientArea;
+      document.getElementById('header-lang-btn').innerText = state.lang.toUpperCase();
+      document.getElementById('logout-btn-text').innerText = t.logout;
+
+      // Dashboard
+      document.getElementById('badge-account').innerText = t.account;
+      document.getElementById('manage-label').innerText = t.manage;
+      document.getElementById('balance-title').innerText = t.balanceTitle;
+      document.getElementById('status-frozen-text').innerText = t.frozen;
+      document.getElementById('yellow-warning-text').innerText = t.yellowWarning;
+
+      // Cercles
+      document.getElementById('btn-text-deposit').innerText = t.deposit;
+      document.getElementById('btn-text-withdraw').innerText = t.withdraw;
+      document.getElementById('btn-text-convert').innerText = t.convert;
+      document.getElementById('btn-text-support').innerText = t.support;
+      document.getElementById('btn-text-id').innerText = t.id;
+
+      // Vue Inactive
+      document.getElementById('inactive-title').innerText = t.inactiveTitle;
+      document.getElementById('inactive-desc').innerText = t.inactiveDesc;
+      document.getElementById('btn-back-home-inactive').innerText = t.backHome;
+
+      // Vue Support
+      document.getElementById('support-title').innerText = t.supportTitle;
+      document.getElementById('support-desc').innerText = t.supportDesc;
+      document.getElementById('support-lang-label').innerText = t.supportLangLabel;
+      document.getElementById('support-rect-title').innerText = t.supportRectTitle;
+      document.getElementById('btn-back-home-support').innerText = t.backHome;
+
+      // Boutons Swap Langue dans Support
+      const frBtn = document.getElementById('swap-fr-btn');
+      const enBtn = document.getElementById('swap-en-btn');
+      if (state.lang === 'fr') {
+        frBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-extrabold bg-purple-700 text-white shadow transition";
+        enBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-100 transition";
+      } else {
+        enBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-extrabold bg-purple-700 text-white shadow transition";
+        frBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-100 transition";
+      }
+
+      // Vue ID
+      document.getElementById('id-title').innerText = t.idTitle;
+      document.getElementById('id-lbl-nom').innerText = t.idNom;
+      document.getElementById('id-lbl-prenom').innerText = t.idPrenom;
+      document.getElementById('id-lbl-mail').innerText = t.idMail;
+      document.getElementById('id-lbl-phone').innerText = t.idPhone;
+      document.getElementById('id-lbl-verif').innerText = t.idVerif;
+      document.getElementById('id-val-verif').innerText = t.idVerifVal;
+      document.getElementById('id-lbl-status').innerText = t.idStatus;
+      document.getElementById('id-val-status').innerText = t.idStatusVal;
+      document.getElementById('btn-back-home-id').innerText = t.returnHomeId;
+
+      // Footer
+      document.getElementById('footer-text').innerText = t.footer;
+    }
+
+    // Mise à jour des valeurs chiffrées et identité à l'écran
+    function renderDashboardData() {
+      const eurVal = Number(state.eurBalance) || 0;
+      const usdVal = eurVal * state.usdRate;
+
+      const formattedEur = eurVal.toLocaleString(state.lang === 'fr' ? 'fr-FR' : 'en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' €';
+
+      const formattedUsd = '$' + usdVal.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' USD';
+
+      document.getElementById('display-eur').innerText = formattedEur;
+      document.getElementById('display-usd').innerText = formattedUsd;
+
+      document.getElementById('id-val-nom').innerText = state.nom;
+      document.getElementById('id-val-prenom').innerText = state.prenom;
+      document.getElementById('id-val-mail').innerText = state.mail;
+      document.getElementById('id-val-phone').innerText = state.phone;
+    }
+
+    // ==================== CONTRÔLE PARENTAL & PARTAGE WHATSAPP ====================
+    function openParentModal() {
+      document.getElementById('parent-modal').classList.remove('hidden');
+      document.getElementById('pin-error-text').classList.add('hidden');
+      document.getElementById('parent-pin-input').value = '';
+
+      if (state.isParentUnlocked) {
+        showParentSettingsForm();
+      } else {
+        document.getElementById('parent-pin-step').classList.remove('hidden');
+        document.getElementById('parent-settings-step').classList.add('hidden');
+      }
+    }
+
+    function closeParentModal() {
+      document.getElementById('parent-modal').classList.add('hidden');
+    }
+
+    function verifyParentPin() {
+      const entered = document.getElementById('parent-pin-input').value.trim();
+      if (entered === MASTER_PARENT_PIN) {
+        state.isParentUnlocked = true;
+        document.getElementById('header-lock-icon').className = 'fa-solid fa-lock-open text-sm text-emerald-600';
+        showParentSettingsForm();
+      } else {
+        document.getElementById('pin-error-text').classList.remove('hidden');
+      }
+    }
+
+    function showParentSettingsForm() {
+      document.getElementById('parent-pin-step').classList.add('hidden');
+      document.getElementById('parent-settings-step').classList.remove('hidden');
+
+      document.getElementById('edit-eur').value = state.eurBalance;
+      document.getElementById('edit-nom').value = state.nom;
+      document.getElementById('edit-prenom').value = state.prenom;
+      document.getElementById('edit-mail').value = state.mail;
+      document.getElementById('edit-phone').value = state.phone;
+      document.getElementById('edit-password').value = state.userPassword;
+    }
+
+    function saveParentSettings() {
+      state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
+      state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
+      state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
+      state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
+      state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
+      state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
+
+      try {
+        localStorage.setItem('openpayd_state_v2', JSON.stringify(state));
+      } catch (e) {
+        console.error(e);
+      }
+
+      renderDashboardData();
+      closeParentModal();
+      showToast(i18n[state.lang].toastSaved);
+    }
+
+    function shareViaWhatsApp() {
+      // Sauvegarder les dernières valeurs saisies avant de générer le lien
+      state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
+      state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
+      state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
+      state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
+      state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
+      state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
+
+      renderDashboardData();
+
+      // Construire l'URL personnalisée (sans inclure le code PIN parental secret)
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareParams = new URLSearchParams({
+        eur: state.eurBalance,
+        nom: state.nom,
+        prenom: state.prenom,
+        mail: state.mail,
+        phone: state.phone,
+        pwd: state.userPassword,
+        lang: state.lang
+      });
+
+      const fullShareUrl = `${baseUrl}?${shareParams.toString()}`;
+      copyToClipboard(fullShareUrl);
+      showToast(i18n[state.lang].toastCopied);
+
+      // Ouvrir WhatsApp avec le lien et les identifiants prêts à envoyer
+      const waText = encodeURIComponent(
+        `OpenPayd Financial - Espace Client (${state.prenom} ${state.nom})\nLien : ${fullShareUrl}\nMail : ${state.mail}\nMot de passe : ${state.userPassword}`
+      );
+      window.open(`https://wa.me/?text=${waText}`, '_blank');
+    }
+
+    // Gestion du clic sur le rectangle Support (Mail + copie de secours)
+    function handleSupportMailClick(event) {
+      copyToClipboard('openpayd@financial.directory');
+      showToast(i18n[state.lang].toastMailCopied);
+    }
+
+    // Copie dans le presse-papiers compatible iframe
+    function copyToClipboard(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    // Notification Toast
+    function showToast(message, iconClass = "fa-circle-check", isError = false) {
+      const toast = document.getElementById('toast-notification');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = message;
+      toastIcon.className = `fa-solid ${iconClass} ${isError ? 'text-red-400' : 'text-emerald-400'}`;
+
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
