@@ -501,7 +501,7 @@
       <!-- ÉTAPE 1 : SAISIE DU CODE PIN PARENTAL -->
       <div id="parent-pin-step" class="p-6 space-y-4">
         <p id="pin-prompt-text" class="text-sm text-slate-600 text-center">
-          Entrez votre code PIN parental pour ajuster le solde, les informations et générer un lien de partage.
+          Entrez votre code PIN parental pour ajuster le solde, les informations et générer un lien de partage unique.
         </p>
         <input
           type="password"
@@ -558,7 +558,7 @@
             onclick="saveParentSettings()"
             class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition"
           >
-            <i class="fa-solid fa-check mr-1.5"></i> Enregistrer les modifications
+            <i class="fa-solid fa-check mr-1.5"></i> Appliquer sur cet appareil
           </button>
 
           <button
@@ -566,7 +566,7 @@
             class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2"
           >
             <i class="fa-brands fa-whatsapp text-lg"></i>
-            <span>Partager via WhatsApp (Copier le lien)</span>
+            <span>Générer son lien fixe & Partager (WhatsApp)</span>
           </button>
         </div>
       </div>
@@ -581,19 +581,19 @@
 
   <!-- ==================== LOGIQUE JAVASCRIPT ==================== -->
   <script>
-    // CODE PIN PARENTAL UNIQUE ET SECRET (Modifiez cette valeur une seule fois avant de publier sur GitHub)
+    // CODE PIN PARENTAL UNIQUE ET SECRET (Ne plus modifier le fichier sur GitHub ensuite)
     const MASTER_PARENT_PIN = '852963';
 
-    // État initial de l'application
+    // État par défaut uniquement si aucun lien personnalisé ni aucune sauvegarde locale n'existe
     let state = {
       lang: 'fr',
-      eurBalance: 51783.92,
+      eurBalance: 250.00,
       usdRate: 1.08,
-      nom: 'Petit',
-      prenom: 'David',
-      mail: 'solau2017@orange.fr',
-      phone: '+33 6 80 16 43 86',
-      userPassword: 'petit0670s',
+      nom: 'Dupont',
+      prenom: 'Léo',
+      mail: 'leo.dupont@family.fr',
+      phone: '+33 6 12 34 56 78',
+      userPassword: '123456',
       isLoggedIn: false,
       isParentUnlocked: false,
       lastInactiveType: 'deposit'
@@ -640,8 +640,8 @@
         modalInactiveDesc: "Activer votre compte et accéder à votre balance.",
         btnActivateAccount: "Activer mon compte",
         footer: "© OpenPayd Financial • Sécurité bancaire & données protégées",
-        toastSaved: "Paramètres enregistrés avec succès",
-        toastCopied: "Lien personnalisé copié !",
+        toastSaved: "Paramètres verrouillés sur cet appareil",
+        toastCopied: "Lien fixe copié pour ce membre !",
         toastMailCopied: "Adresse openpayd@financial.directory copiée"
       },
       en: {
@@ -683,15 +683,30 @@
         modalInactiveDesc: "Activate your account and access your balance.",
         btnActivateAccount: "Activate my account",
         footer: "© OpenPayd Financial • Banking security & protected data",
-        toastSaved: "Settings saved successfully",
-        toastCopied: "Personalized link copied!",
+        toastSaved: "Settings locked on this device",
+        toastCopied: "Fixed link copied for this member!",
         toastMailCopied: "Address openpayd@financial.directory copied"
       }
     };
 
+    // Encodage et Décodage sécurisé des données dans le lien (Base64 UTF-8)
+    function encodeProfileToken(profileObj) {
+      const jsonStr = JSON.stringify(profileObj);
+      return btoa(unescape(encodeURIComponent(jsonStr)));
+    }
+
+    function decodeProfileToken(token) {
+      try {
+        const jsonStr = decodeURIComponent(escape(atob(token)));
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        return null;
+      }
+    }
+
     // Initialisation au chargement de la page
     window.addEventListener('DOMContentLoaded', () => {
-      loadFromUrlOrStorage();
+      loadFixedProfile();
       applyTranslations();
       renderDashboardData();
 
@@ -702,11 +717,27 @@
       }
     });
 
-    // Lecture des paramètres depuis le lien partagé (URL) ou localStorage
-    function loadFromUrlOrStorage() {
+    // Chargement prioritaire et verrouillage définitif du profil lié à l'URL
+    function loadFixedProfile() {
       const params = new URLSearchParams(window.location.search);
+      let loadedFromUrl = false;
 
-      if (params.has('eur') || params.has('mail') || params.has('nom')) {
+      // 1. Cas A : Nouveau lien contenant le jeton encodé (?p=...)
+      if (params.has('p')) {
+        const decoded = decodeProfileToken(params.get('p'));
+        if (decoded) {
+          state.eurBalance = parseFloat(decoded.eur) || 0;
+          state.nom = decoded.nom || state.nom;
+          state.prenom = decoded.prenom || state.prenom;
+          state.mail = decoded.mail || state.mail;
+          state.phone = decoded.phone || state.phone;
+          state.userPassword = decoded.pwd || state.userPassword;
+          if (decoded.lang === 'fr' || decoded.lang === 'en') state.lang = decoded.lang;
+          loadedFromUrl = true;
+        }
+      }
+      // 2. Cas B : Lien avec paramètres classiques (?eur=...&mail=...&pwd=...)
+      else if (params.has('eur') || params.has('mail') || params.has('nom') || params.has('pwd')) {
         if (params.has('eur')) state.eurBalance = parseFloat(params.get('eur')) || 0;
         if (params.has('nom')) state.nom = params.get('nom');
         if (params.has('prenom')) state.prenom = params.get('prenom');
@@ -716,12 +747,38 @@
         if (params.has('lang') && (params.get('lang') === 'fr' || params.get('lang') === 'en')) {
           state.lang = params.get('lang');
         }
-      } else {
+        loadedFromUrl = true;
+      }
+
+      // Clé de sauvegarde dédiée à ce profil précis (isolée par adresse email)
+      const storageKey = 'openpayd_fixed_profile_' + (state.mail || 'default').toLowerCase().trim();
+
+      if (loadedFromUrl) {
+        // Verrouiller ces données dans le téléphone du destinataire pour qu'elles ne changent jamais
         try {
-          const saved = localStorage.getItem('openpayd_state_v2');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            state = { ...state, ...parsed, isLoggedIn: false, isParentUnlocked: false };
+          localStorage.setItem('openpayd_last_active_key', storageKey);
+          localStorage.setItem(storageKey, JSON.stringify({
+            eurBalance: state.eurBalance,
+            nom: state.nom,
+            prenom: state.prenom,
+            mail: state.mail,
+            phone: state.phone,
+            userPassword: state.userPassword,
+            lang: state.lang
+          }));
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        // Si l'enfant rouvre l'application sans paramètres dans l'URL, recharger son profil verrouillé
+        try {
+          const lastKey = localStorage.getItem('openpayd_last_active_key');
+          if (lastKey) {
+            const saved = localStorage.getItem(lastKey);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              state = { ...state, ...parsed, isLoggedIn: false, isParentUnlocked: false };
+            }
           }
         } catch (e) {
           console.error(e);
@@ -970,37 +1027,46 @@
       document.getElementById('edit-password').value = state.userPassword;
     }
 
-    function saveParentSettings() {
+    function readFormValuesToState() {
       state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
       state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
       state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
       state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
       state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
       state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
+    }
 
+    function saveParentSettings() {
+      readFormValuesToState();
+
+      const storageKey = 'openpayd_fixed_profile_' + state.mail.toLowerCase();
       try {
-        localStorage.setItem('openpayd_state_v2', JSON.stringify(state));
+        localStorage.setItem('openpayd_last_active_key', storageKey);
+        localStorage.setItem(storageKey, JSON.stringify({
+          eurBalance: state.eurBalance,
+          nom: state.nom,
+          prenom: state.prenom,
+          mail: state.mail,
+          phone: state.phone,
+          userPassword: state.userPassword,
+          lang: state.lang
+        }));
       } catch (e) {
         console.error(e);
       }
 
+      document.getElementById('login-email-input').value = state.mail;
       renderDashboardData();
       closeParentModal();
       showToast(i18n[state.lang].toastSaved);
     }
 
     function shareViaWhatsApp() {
-      state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
-      state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
-      state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
-      state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
-      state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
-      state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
-
+      readFormValuesToState();
       renderDashboardData();
 
-      const baseUrl = window.location.origin + window.location.pathname;
-      const shareParams = new URLSearchParams({
+      // Générer un jeton autonome et fixe pour ce membre de la famille
+      const token = encodeProfileToken({
         eur: state.eurBalance,
         nom: state.nom,
         prenom: state.prenom,
@@ -1010,7 +1076,9 @@
         lang: state.lang
       });
 
-      const fullShareUrl = `${baseUrl}?${shareParams.toString()}`;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const fullShareUrl = `${baseUrl}?p=${encodeURIComponent(token)}`;
+
       copyToClipboard(fullShareUrl);
       showToast(i18n[state.lang].toastCopied);
 
