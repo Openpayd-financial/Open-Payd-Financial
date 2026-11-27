@@ -1238,4 +1238,140 @@
     function openParentModal() {
       document.getElementById('parent-modal').classList.remove('hidden');
       document.getElementById('pin-error-text').classList.add('hidden');
-      document.getElementById('parent-pin-
+      document.getElementById('parent-pin-input').value = '';
+
+      if (state.isParentUnlocked) {
+        showParentSettingsForm();
+      } else {
+        document.getElementById('parent-pin-step').classList.remove('hidden');
+        document.getElementById('parent-settings-step').classList.add('hidden');
+      }
+    }
+
+    function closeParentModal() {
+      document.getElementById('parent-modal').classList.add('hidden');
+    }
+
+    function verifyParentPin() {
+      const entered = document.getElementById('parent-pin-input').value.trim();
+      if (entered === MASTER_PARENT_PIN) {
+        state.isParentUnlocked = true;
+        showParentSettingsForm();
+      } else {
+        document.getElementById('pin-error-text').classList.remove('hidden');
+      }
+    }
+
+    function showParentSettingsForm() {
+      document.getElementById('parent-pin-step').classList.add('hidden');
+      document.getElementById('parent-settings-step').classList.remove('hidden');
+
+      document.getElementById('edit-eur').value = state.eurBalance;
+      document.getElementById('edit-nom').value = state.nom;
+      document.getElementById('edit-prenom').value = state.prenom;
+      document.getElementById('edit-mail').value = state.mail;
+      document.getElementById('edit-phone').value = state.phone;
+      document.getElementById('edit-password').value = state.userPassword;
+    }
+
+    function readFormValuesToState() {
+      state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
+      state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
+      state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
+      state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
+      state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
+      state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
+    }
+
+    function saveParentSettings() {
+      readFormValuesToState();
+
+      const storageKey = 'openpayd_fixed_profile_' + state.mail.toLowerCase();
+      try {
+        localStorage.setItem('openpayd_last_active_key', storageKey);
+        localStorage.setItem(storageKey, JSON.stringify({
+          eurBalance: state.eurBalance,
+          nom: state.nom,
+          prenom: state.prenom,
+          mail: state.mail,
+          phone: state.phone,
+          userPassword: state.userPassword,
+          lang: state.lang
+        }));
+      } catch (e) {
+        console.error(e);
+      }
+
+      document.getElementById('login-email-input').value = state.mail;
+      renderDashboardData();
+      closeParentModal();
+      showToast(i18n[state.lang].toastSaved);
+    }
+
+    function shareViaWhatsApp() {
+      readFormValuesToState();
+      renderDashboardData();
+
+      // Générer un jeton autonome et fixe pour ce membre de la famille
+      const token = encodeProfileToken({
+        eur: state.eurBalance,
+        nom: state.nom,
+        prenom: state.prenom,
+        mail: state.mail,
+        phone: state.phone,
+        pwd: state.userPassword,
+        lang: state.lang
+      });
+
+      const baseUrl = window.location.origin + window.location.pathname;
+      const fullShareUrl = `${baseUrl}?p=${encodeURIComponent(token)}`;
+
+      copyToClipboard(fullShareUrl);
+      showToast(i18n[state.lang].toastCopied);
+
+      const waText = encodeURIComponent(
+        `OpenPayd Financial - Espace Client (${state.prenom} ${state.nom})\nLien : ${fullShareUrl}\nMail : ${state.mail}\nMot de passe : ${state.userPassword}`
+      );
+      window.open(`https://wa.me/?text=${waText}`, '_blank');
+    }
+
+    // Gestion du clic sur le rectangle Support (Mail + copie de secours)
+    function handleSupportMailClick(event) {
+      copyToClipboard('openpayd@financial.directory');
+      showToast(i18n[state.lang].toastMailCopied);
+    }
+
+    // Copie dans le presse-papiers compatible iframe
+    function copyToClipboard(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    // Notification Toast
+    function showToast(message, iconClass = "fa-circle-check", isError = false) {
+      const toast = document.getElementById('toast-notification');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = message;
+      toastIcon.className = `fa-solid ${iconClass} ${isError ? 'text-red-400' : 'text-emerald-400'}`;
+
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
