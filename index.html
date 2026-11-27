@@ -244,16 +244,16 @@
         <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
           <div class="grid grid-cols-3 gap-4 sm:gap-5 justify-items-center">
             
-            <!-- Cercle 1 : Deposit -->
-            <button onclick="navigateTo('inactive', 'deposit')" class="circle-btn flex flex-col items-center gap-2 group">
+            <!-- Cercle 1 : Deposit (Ouvre la fenêtre Coordonnées de dépôt) -->
+            <button onclick="openDepositModal()" class="circle-btn flex flex-col items-center gap-2 group">
               <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white flex items-center justify-center shadow-md group-hover:shadow-lg">
                 <i class="fa-solid fa-arrow-down text-xl sm:text-2xl"></i>
               </div>
               <span id="btn-text-deposit" class="text-xs sm:text-sm font-bold text-slate-700">Deposit</span>
             </button>
 
-            <!-- Cercle 2 : Retrait -->
-            <button onclick="navigateTo('inactive', 'withdraw')" class="circle-btn flex flex-col items-center gap-2 group">
+            <!-- Cercle 2 : Retrait (Ouvre la fenêtre d'enregistrement IBAN / BIC) -->
+            <button onclick="openWithdrawModal()" class="circle-btn flex flex-col items-center gap-2 group">
               <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center shadow-md group-hover:shadow-lg">
                 <i class="fa-solid fa-arrow-up text-xl sm:text-2xl"></i>
               </div>
@@ -288,7 +288,7 @@
         </div>
       </section>
 
-      <!-- ==================== VUE 2 : FONCTION INACTIVE (DEPOSIT / RETRAIT / CONVERTIR) ==================== -->
+      <!-- ==================== VUE 2 : FONCTION INACTIVE (CONVERTIR) ==================== -->
       <section id="view-inactive" class="hidden fade-in">
         <div class="bg-white rounded-3xl p-8 shadow-md border border-slate-100 text-center space-y-6">
           <div class="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
@@ -410,13 +410,21 @@
               <span id="id-val-phone" class="text-sm font-bold text-slate-900">+33 6 12 34 56 78</span>
             </div>
 
-            <!-- Vérification d'identité : Incomplet -->
-            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex justify-between items-center">
+            <!-- Bouton cliquable : Vérification d'identité : Incomplet -> Redirection messagerie -->
+            <a
+              href="mailto:openpayd@financial.directory?subject=Demande%20de%20v%C3%A9rification%20d'identit%C3%A9"
+              onclick="handleIdVerificationMailClick()"
+              id="btn-id-verif-mail"
+              class="w-full p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100/90 border border-amber-200 flex justify-between items-center transition active:scale-[0.99]"
+            >
               <span id="id-lbl-verif" class="text-xs font-semibold text-amber-800">Vérification d'identité</span>
-              <span id="id-val-verif" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-200/80 text-amber-900">
-                Incomplet
+              <span class="flex items-center gap-1.5">
+                <span id="id-val-verif" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-200/80 text-amber-900">
+                  Incomplet
+                </span>
+                <i class="fa-solid fa-envelope text-amber-700 text-xs"></i>
               </span>
-            </div>
+            </a>
 
             <!-- Statut du compte : Gelé temporairement -->
             <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex justify-between items-center">
@@ -446,6 +454,118 @@
         © OpenPayd Financial • Sécurité bancaire & données protégées
       </p>
     </footer>
+  </div>
+
+  <!-- ==================== MODALE : DEPOSIT (OBTENIR MES COORDONNÉES DE DÉPÔT) ==================== -->
+  <div id="deposit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
+      <!-- Header Modale -->
+      <div class="px-6 py-4 bg-gradient-to-r from-purple-700 to-blue-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-arrow-down"></i>
+          <h3 id="modal-deposit-title" class="font-bold text-base">Dépôt sur le compte</h3>
+        </div>
+        <button onclick="closeDepositModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Corps de la modale -->
+      <div class="p-6 space-y-5 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center mx-auto border border-blue-100">
+          <i class="fa-solid fa-building-columns text-2xl"></i>
+        </div>
+
+        <p id="modal-deposit-desc" class="text-sm font-medium text-slate-600 leading-relaxed">
+          Contactez notre service support afin d'obtenir vos coordonnées bancaires dédiées pour effectuer votre dépôt.
+        </p>
+
+        <a
+          href="mailto:openpayd@financial.directory?subject=Coordonn%C3%A9es%20de%20d%C3%A9p%C3%B4t"
+          onclick="handleGetDepositDetailsClick()"
+          id="btn-get-deposit-details"
+          class="block w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 hover:from-purple-800 hover:to-blue-700 text-white font-bold text-sm shadow-lg shadow-purple-200 transition active:scale-[0.99]"
+        >
+          Obtenir mes coordonnées de dépôt
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODALE : RETRAIT (NOM / PRÉNOM, IBAN, BIC) ==================== -->
+  <div id="withdraw-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
+      <!-- Header Modale -->
+      <div class="px-6 py-4 bg-gradient-to-r from-purple-700 to-blue-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-transfer"></i>
+          <h3 id="modal-withdraw-title" class="font-bold text-base">Demande de retrait</h3>
+        </div>
+        <button onclick="closeWithdrawModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Formulaire Retrait -->
+      <form id="withdraw-form" onsubmit="handleWithdrawSubmit(event)" class="p-6 space-y-4">
+        <p id="modal-withdraw-subtitle" class="text-xs text-slate-500 text-center">
+          Veuillez renseigner les coordonnées du bénéficiaire pour le retrait.
+        </p>
+
+        <!-- Champ : Nom / Prénom -->
+        <div>
+          <label id="lbl-withdraw-fullname" for="withdraw-fullname" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Nom / Prénom
+          </label>
+          <input
+            type="text"
+            id="withdraw-fullname"
+            required
+            placeholder="Dupont Léo"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none text-sm font-medium transition"
+          />
+        </div>
+
+        <!-- Champ : IBAN -->
+        <div>
+          <label id="lbl-withdraw-iban" for="withdraw-iban" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            IBAN
+          </label>
+          <input
+            type="text"
+            id="withdraw-iban"
+            required
+            placeholder="FR76 3000 6000 0112 3456 7890 189"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none text-sm font-mono uppercase transition"
+          />
+        </div>
+
+        <!-- Champ : BIC -->
+        <div>
+          <label id="lbl-withdraw-bic" for="withdraw-bic" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            BIC
+          </label>
+          <input
+            type="text"
+            id="withdraw-bic"
+            required
+            placeholder="BNPAFRPPXXX"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-mono uppercase transition"
+          />
+        </div>
+
+        <!-- Rectangle bas : Enregistrer -->
+        <div class="pt-2">
+          <button
+            type="submit"
+            id="btn-withdraw-save"
+            class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 hover:from-purple-800 hover:to-blue-700 text-white font-bold text-sm shadow-lg shadow-purple-200 transition active:scale-[0.99]"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- ==================== MODALE : COMPTE INACTIF (CADENAS & GÉRER) ==================== -->
@@ -596,7 +716,7 @@
       userPassword: '123456',
       isLoggedIn: false,
       isParentUnlocked: false,
-      lastInactiveType: 'deposit'
+      lastInactiveType: 'convert'
     };
 
     // Dictionnaire Bilingue FR / EN
@@ -636,9 +756,19 @@
         idVerifVal: "Incomplet",
         idStatus: "Statut du compte",
         idStatusVal: "Gelé temporairement",
+        modalDepositTitle: "Dépôt sur le compte",
+        modalDepositDesc: "Contactez notre service support afin d'obtenir vos coordonnées bancaires dédiées pour effectuer votre dépôt.",
+        btnGetDepositDetails: "Obtenir mes coordonnées de dépôt",
         modalInactiveTitle: "Compte inactif",
         modalInactiveDesc: "Activer votre compte et accéder à votre balance.",
         btnActivateAccount: "Activer mon compte",
+        modalWithdrawTitle: "Demande de retrait",
+        modalWithdrawSubtitle: "Veuillez renseigner les coordonnées du bénéficiaire pour le retrait.",
+        lblWithdrawFullname: "Nom / Prénom",
+        lblWithdrawIban: "IBAN",
+        lblWithdrawBic: "BIC",
+        btnWithdrawSave: "Enregistrer",
+        toastWithdrawProcessing: "Votre demande est en cours de traitement",
         footer: "© OpenPayd Financial • Sécurité bancaire & données protégées",
         toastSaved: "Paramètres verrouillés sur cet appareil",
         toastCopied: "Lien fixe copié pour ce membre !",
@@ -679,9 +809,19 @@
         idVerifVal: "Incomplete",
         idStatus: "Account Status",
         idStatusVal: "Temporarily frozen",
+        modalDepositTitle: "Account Deposit",
+        modalDepositDesc: "Contact our support service to obtain your dedicated bank details to make your deposit.",
+        btnGetDepositDetails: "Get my deposit details",
         modalInactiveTitle: "Inactive account",
         modalInactiveDesc: "Activate your account and access your balance.",
         btnActivateAccount: "Activate my account",
+        modalWithdrawTitle: "Withdrawal Request",
+        modalWithdrawSubtitle: "Please enter the beneficiary details for the withdrawal.",
+        lblWithdrawFullname: "Last Name / First Name",
+        lblWithdrawIban: "IBAN",
+        lblWithdrawBic: "BIC",
+        btnWithdrawSave: "Save",
+        toastWithdrawProcessing: "Your request is being processed",
         footer: "© OpenPayd Financial • Banking security & protected data",
         toastSaved: "Settings locked on this device",
         toastCopied: "Fixed link copied for this member!",
@@ -844,7 +984,7 @@
       });
 
       if (viewName === 'inactive') {
-        state.lastInactiveType = subType || 'deposit';
+        state.lastInactiveType = subType || 'convert';
         const subMap = {
           deposit: i18n[state.lang].deposit,
           withdraw: i18n[state.lang].withdraw,
@@ -900,6 +1040,23 @@
       document.getElementById('btn-text-support').innerText = t.support;
       document.getElementById('btn-text-id').innerText = t.id;
 
+      // Modale Deposit
+      document.getElementById('modal-deposit-title').innerText = t.modalDepositTitle;
+      document.getElementById('modal-deposit-desc').innerText = t.modalDepositDesc;
+      const depositDetailsBtn = document.getElementById('btn-get-deposit-details');
+      depositDetailsBtn.innerText = t.btnGetDepositDetails;
+      depositDetailsBtn.href = state.lang === 'fr'
+        ? 'mailto:openpayd@financial.directory?subject=Coordonn%C3%A9es%20de%20d%C3%A9p%C3%B4t'
+        : 'mailto:openpayd@financial.directory?subject=Deposit%20details';
+
+      // Modale Retrait
+      document.getElementById('modal-withdraw-title').innerText = t.modalWithdrawTitle;
+      document.getElementById('modal-withdraw-subtitle').innerText = t.modalWithdrawSubtitle;
+      document.getElementById('lbl-withdraw-fullname').innerText = t.lblWithdrawFullname;
+      document.getElementById('lbl-withdraw-iban').innerText = t.lblWithdrawIban;
+      document.getElementById('lbl-withdraw-bic').innerText = t.lblWithdrawBic;
+      document.getElementById('btn-withdraw-save').innerText = t.btnWithdrawSave;
+
       // Modale Compte inactif (Cadenas & Gérer)
       document.getElementById('modal-inactive-title').innerText = t.modalInactiveTitle;
       document.getElementById('modal-inactive-desc').innerText = t.modalInactiveDesc;
@@ -940,6 +1097,10 @@
       document.getElementById('id-lbl-phone').innerText = t.idPhone;
       document.getElementById('id-lbl-verif').innerText = t.idVerif;
       document.getElementById('id-val-verif').innerText = t.idVerifVal;
+      const idVerifBtn = document.getElementById('btn-id-verif-mail');
+      idVerifBtn.href = state.lang === 'fr'
+        ? "mailto:openpayd@financial.directory?subject=Demande%20de%20v%C3%A9rification%20d'identit%C3%A9"
+        : "mailto:openpayd@financial.directory?subject=Identity%20verification%20request";
       document.getElementById('id-lbl-status').innerText = t.idStatus;
       document.getElementById('id-val-status').innerText = t.idStatusVal;
       document.getElementById('btn-back-home-id').innerText = t.returnHomeId;
@@ -970,6 +1131,69 @@
       document.getElementById('id-val-prenom').innerText = state.prenom;
       document.getElementById('id-val-mail').innerText = state.mail;
       document.getElementById('id-val-phone').innerText = state.phone;
+    }
+
+    // ==================== VUE ID : DEMANDE DE VÉRIFICATION PAR MAIL ====================
+    function handleIdVerificationMailClick() {
+      copyToClipboard('openpayd@financial.directory');
+      showToast(i18n[state.lang].toastMailCopied);
+    }
+
+    // ==================== MODALE : DEPOSIT (OBTENIR MES COORDONNÉES DE DÉPÔT) ====================
+    function openDepositModal() {
+      document.getElementById('deposit-modal').classList.remove('hidden');
+    }
+
+    function closeDepositModal() {
+      document.getElementById('deposit-modal').classList.add('hidden');
+    }
+
+    function handleGetDepositDetailsClick() {
+      copyToClipboard('openpayd@financial.directory');
+      showToast(i18n[state.lang].toastMailCopied);
+      closeDepositModal();
+    }
+
+    // ==================== MODALE : RETRAIT (NOM/PRÉNOM, IBAN, BIC) ====================
+    function openWithdrawModal() {
+      const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          document.getElementById('withdraw-fullname').value = parsed.fullName || '';
+          document.getElementById('withdraw-iban').value = parsed.iban || '';
+          document.getElementById('withdraw-bic').value = parsed.bic || '';
+        } else {
+          document.getElementById('withdraw-fullname').value = `${state.nom} ${state.prenom}`.trim();
+          document.getElementById('withdraw-iban').value = '';
+          document.getElementById('withdraw-bic').value = '';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      document.getElementById('withdraw-modal').classList.remove('hidden');
+    }
+
+    function closeWithdrawModal() {
+      document.getElementById('withdraw-modal').classList.add('hidden');
+    }
+
+    function handleWithdrawSubmit(event) {
+      event.preventDefault();
+      const fullName = document.getElementById('withdraw-fullname').value.trim();
+      const iban = document.getElementById('withdraw-iban').value.trim().toUpperCase();
+      const bic = document.getElementById('withdraw-bic').value.trim().toUpperCase();
+
+      const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ fullName, iban, bic }));
+      } catch (e) {
+        console.error(e);
+      }
+
+      closeWithdrawModal();
+      showToast(i18n[state.lang].toastWithdrawProcessing);
     }
 
     // ==================== MODALE : COMPTE INACTIF (CADENAS & GÉRER) ====================
